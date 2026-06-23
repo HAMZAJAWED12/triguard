@@ -1,0 +1,30 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# --- Virtual environments ---
+.venv/
+.venv-linux/
+venv/
+env/
+
+# --- Model weights & caches (never commit weights — see CLAUDE.md) ---
+*.bin
+*.pt
+*.pth
+*.safetensors
+models/
+.cache/
+
+# --- Real dataset downloads (evaluation track T2) ---
+# Keep hand-built data/sample_inputs/ tracked; ignore only downloads/caches.
+data/hf_cache/
+data/t2_samples/
+
+# Note: outputs/ is intentionally NOT ignored — saved evaluation JSON
+# envelopes under outputs/evaluation/ are the evidence linked from the report.

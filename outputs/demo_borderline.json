@@ -1,0 +1,65 @@
+{
+  "risk_score": 0.6,
+  "risk_label": "borderline",
+  "flagged_modalities": [
+    "text"
+  ],
+  "rationale": "the text classifier flagged toxicity at 0.60 (insult). the image caption 'a generic photo described as 'restaurant review plate'' showed no obvious risk cues. audio events: speech, speech",
+  "uncertainties": [
+    "low_text_classifier_confidence",
+    "low_image_caption_confidence"
+  ],
+  "recommended_action": "review",
+  "text_evidence": {
+    "toxicity_score": 0.6,
+    "top_labels": [
+      "insult"
+    ],
+    "confidence": 0.2,
+    "raw": {
+      "mode": "real",
+      "classifier": "sklearn-tfidf-lr",
+      "prob": 0.6
+    }
+  },
+  "image_evidence": {
+    "caption": "a generic photo described as 'restaurant review plate'",
+    "visual_risk_cues": [],
+    "confidence": 0.4,
+    "raw": {
+      "mode": "mock",
+      "path": "/data/restaurant_review_plate.jpg",
+      "stem_tokens": [
+        "restaurant",
+        "review",
+        "plate"
+      ]
+    }
+  },
+  "audio_evidence": {
+    "transcript": "sample speech about calm speech review",
+    "transcript_confidence": 0.6,
+    "yamnet_tags": [
+      [
+        "speech",
+        0.6
+      ],
+      [
+        "speech",
+        0.7
+      ]
+    ],
+    "raw": {
+      "mode": "mock",
+      "path": "/data/calm_speech_review.wav"
+    }
+  },
+  "latency_ms": 13,
+  "model_versions": {
+    "orchestrator": "0.1.0-tier-a",
+    "text_model": "sklearn-tfidf-lr-v1",
+    "image_model": "mock-v1",
+    "audio_model": "mock-v1",
+    "llm_judge": "rule-based-v1"
+  }
+}

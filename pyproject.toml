@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "triguard"
+version = "0.1.0"
+description = "Multimodal, explainable, locally deployable content moderation pipeline (Tier-A prototype)"
+authors = [{name = "Hamza"}]
+requires-python = ">=3.10"
+dependencies = ["pydantic>=2.0,<3", "scikit-learn>=1.3,<2"]
+
+[project.optional-dependencies]
+# `pip install -e ".[eval]"` — public datasets (T2) + real perception models.
+# For CPU-only torch wheels add: --extra-index-url https://download.pytorch.org/whl/cpu
+# (extra indexes can't live in pyproject; see requirements.txt).
+eval = [
+    "datasets>=2.18,<4",
+    "numpy>=1.24,<2",
+    "transformers>=4.40,<5",
+    "torch>=2.2,<3",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pylint.MASTER]
+# Put the src/ layout on the path so Pylint resolves `triguard.*` imports
+# (kills the spurious E0401 import-error reports). Mirrors PYTHONPATH=src.
+init-hook = 'import sys; sys.path.insert(0, "src")'
+
+[tool.pylint.messages_control]
+# Disable checks that clash with this project's documented house style:
+#   - lazy heavy-ML imports inside loaders (CLAUDE.md rule)
+#   - deliberate broad except for graceful wrapper/judge fallbacks
+#   - module-level cache flag toggled via `global`
+#   - terse functions, self-documenting pydantic models, docstring-free tests
+disable = [
+    "import-outside-toplevel",
+    "broad-exception-caught",
+    "global-statement",
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+]

@@ -1,0 +1,119 @@
+{
+  "track": "T2",
+  "run_at": "2026-06-23T07:41:02.725989+00:00",
+  "dataset": {
+    "source": "civil_comments",
+    "hub_id": "google/civil_comments",
+    "config": null,
+    "split": "test"
+  },
+  "n_samples": 500,
+  "class_labels": [
+    "non-toxic",
+    "toxic"
+  ],
+  "class_balance": {
+    "non-toxic": 468,
+    "toxic": 32
+  },
+  "config": {
+    "sample_size": 500,
+    "seed": 42,
+    "threshold": 0.5,
+    "wrapper_mode": "real"
+  },
+  "model_versions": {
+    "text_model": "sklearn-tfidf-lr"
+  },
+  "accuracy": 0.542,
+  "macro_f1": 0.4149,
+  "per_class": {
+    "non-toxic": {
+      "precision": 0.9509,
+      "recall": 0.5385,
+      "f1": 0.6876
+    },
+    "toxic": {
+      "precision": 0.0809,
+      "recall": 0.5938,
+      "f1": 0.1423
+    }
+  },
+  "confusion_matrix": {
+    "non-toxic": {
+      "non-toxic": 252,
+      "toxic": 216
+    },
+    "toxic": {
+      "non-toxic": 13,
+      "toxic": 19
+    }
+  },
+  "failures": [
+    {
+      "text": "Whoever voted Cladwell and his fellow grabbers in should donate $1,000 each.  For any other stupid project, I'd say send in $20 to whoever voted for that candidate.  But this is the rail, man.  We're ",
+      "true": 0,
+      "pred": 1,
+      "score": 0.6
+    },
+    {
+      "text": "Money for thugs.",
+      "true": 0,
+      "pred": 1,
+      "score": 0.5347
+    },
+    {
+      "text": "Yet, more potty talk from Breitbart or \"The Rebel\" ?\n\nObvious trolling is obvious when someone likes their own post.\n\nBest ignored !",
+      "true": 1,
+      "pred": 0,
+      "score": 0.4216
+    },
+    {
+      "text": "Reminds me of Doma Castle.",
+      "true": 0,
+      "pred": 1,
+      "score": 0.5235
+    },
+    {
+      "text": "\" you pay for what you get\"!    There's no better venue than the Aloha Stadium!   Hope they have another successful football season!",
+      "true": 0,
+      "pred": 1,
+      "score": 0.6162
+    },
+    {
+      "text": "The lawyers are holding the justice system for ransom.\nNow the doctors want to hold the medical system for ransom.\n   No lawyer = no equal justice = no democracy.\n \n  Now the doctors will scapegoat th",
+      "true": 0,
+      "pred": 1,
+      "score": 0.6
+    },
+    {
+      "text": "And Mauna Kea, the White Mountan, is covered in snow. Right now. Beautiful!  Possibly a sacred event to some neighbors and friends.",
+      "true": 0,
+      "pred": 1,
+      "score": 0.5734
+    },
+    {
+      "text": "Chris best of luck to you and your family.  Hope Boise has good schools for your boys.  You and Jennifer will keep on making Hawaii proud.  Aloha!",
+      "true": 0,
+      "pred": 1,
+      "score": 0.7238
+    },
+    {
+      "text": "I'm sure someone made similar comments about Michaelangelo's works being obscene. Just because you're personally uncomfortable with an artists work doesn't make his masterpieces any less profound. You",
+      "true": 0,
+      "pred": 1,
+      "score": 0.7156
+    },
+    {
+      "text": "I have no trouble picturing \"Godly\" types abusing young children.\n\nMore conventional alleged Christians often think of children as property to be ordered to work and hand their pay over to the parents",
+      "true": 0,
+      "pred": 1,
+      "score": 0.5005
+    }
+  ],
+  "limitations": [
+    "binary scheme (non-toxic / toxic); the source labels carry no 'borderline' band",
+    "the text wrapper is a small sklearn TF-IDF + logistic-regression baseline trained on 30 bundled examples — a sanity floor, not a tuned production model",
+    "civil_comments toxicity is a continuous 0..1 crowd rating thresholded at 0.5 to a binary label; near-threshold items are inherently ambiguous"
+  ]
+}

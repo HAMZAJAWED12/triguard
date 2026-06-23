@@ -1,0 +1,122 @@
+{
+  "track": "T2",
+  "run_at": "2026-06-23T12:48:02.475174+00:00",
+  "dataset": {
+    "source": "civil_comments",
+    "hub_id": "google/civil_comments",
+    "config": null,
+    "split": "test"
+  },
+  "n_samples": 500,
+  "class_labels": [
+    "non-toxic",
+    "toxic"
+  ],
+  "class_balance": {
+    "non-toxic": 468,
+    "toxic": 32
+  },
+  "config": {
+    "backend": "hf",
+    "sample_size": 500,
+    "seed": 42,
+    "threshold": 0.5,
+    "wrapper_mode": "real-hf",
+    "run_env": "wsl-ubuntu"
+  },
+  "model_versions": {
+    "text_model": "unitary/toxic-bert",
+    "text_model_revision": "4d6c22e74ba2fdd26bc4f7238f50766b045a0d94"
+  },
+  "accuracy": 0.928,
+  "macro_f1": 0.6476,
+  "per_class": {
+    "non-toxic": {
+      "precision": 0.9519,
+      "recall": 0.9722,
+      "f1": 0.9619
+    },
+    "toxic": {
+      "precision": 0.4091,
+      "recall": 0.2812,
+      "f1": 0.3333
+    }
+  },
+  "confusion_matrix": {
+    "non-toxic": {
+      "non-toxic": 455,
+      "toxic": 13
+    },
+    "toxic": {
+      "non-toxic": 23,
+      "toxic": 9
+    }
+  },
+  "failures": [
+    {
+      "text": "mR420 - to your reply:  \"Possibly the dumbest comment ever\"  The countdown on the poles are meant to give advance notice of when the light changes.  If a \"friend\" in a borrowed vehicle chooses to igno",
+      "true": 0,
+      "pred": 1,
+      "score": 0.6585
+    },
+    {
+      "text": "Yet, more potty talk from Breitbart or \"The Rebel\" ?\n\nObvious trolling is obvious when someone likes their own post.\n\nBest ignored !",
+      "true": 1,
+      "pred": 0,
+      "score": 0.0158
+    },
+    {
+      "text": "\"...shut down Trump's violence and hate...\"??? What planet is she from...? We know what groups are causing all the destruction and mayhem. Go after them...",
+      "true": 0,
+      "pred": 1,
+      "score": 0.6793
+    },
+    {
+      "text": "And then claim that dog on your income taxes as a dependent!  (I know, people already have done that; but after your prediction comes true it will be legal!)\n\nI'm looking forward to legalization of  p",
+      "true": 1,
+      "pred": 0,
+      "score": 0.0323
+    },
+    {
+      "text": "Perhaps not everyone is as grotesquely course as you!",
+      "true": 1,
+      "pred": 0,
+      "score": 0.067
+    },
+    {
+      "text": "You poor baby. Do you need a tissue?",
+      "true": 0,
+      "pred": 1,
+      "score": 0.7618
+    },
+    {
+      "text": "Thank you for the explanation. So why is abortion this special category of sin and so many other ways to kill are not? Torture? Child rape? Shooting someone in cold blood?",
+      "true": 0,
+      "pred": 1,
+      "score": 0.7318
+    },
+    {
+      "text": "Five police officers in Dallas were murdered by a (Black Lies Murder) supporter so it is true they are a radical racist terrorist group. In addition the Soros sponsored Antifai are just as disgusting ",
+      "true": 1,
+      "pred": 0,
+      "score": 0.0844
+    },
+    {
+      "text": "Give em h*ll!",
+      "true": 0,
+      "pred": 1,
+      "score": 0.7389
+    },
+    {
+      "text": "As I have said before, anyone who calls Pope Francis a Marxist is either a fool or a liar. Same for Obama or Hillary Clinton. Do any of you rightists have a clue about what Marxism is?\n\nAnd anyone who",
+      "true": 1,
+      "pred": 0,
+      "score": 0.2626
+    }
+  ],
+  "limitations": [
+    "binary scheme (non-toxic / toxic); the source labels carry no 'borderline' band",
+    "text wrapper is the pretrained multi-label model unitary/toxic-bert (real-hf)",
+    "civil_comments toxicity is a continuous 0..1 crowd rating thresholded at 0.5 to a binary label; near-threshold items are inherently ambiguous"
+  ]
+}

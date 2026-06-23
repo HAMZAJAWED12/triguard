@@ -1,0 +1,16 @@
+pydantic>=2.0,<3
+# numpy pinned <2 so torch/transformers do not pull numpy 2.x and break sklearn
+numpy>=1.24,<2
+scikit-learn>=1.3,<2
+pytest>=7.0,<10
+# evaluation track T2 — public toxicity datasets (Hugging Face)
+datasets>=2.18,<4
+# Sprint 1 — real text model (unitary/toxic-bert).
+# CPU-only torch wheels (smaller than the default CUDA build).
+--extra-index-url https://download.pytorch.org/whl/cpu
+transformers>=4.40,<5
+torch>=2.2,<3
+# optional — uncomment when integrating real models
+# accelerate>=0.30
+# fastapi>=0.110
+# uvicorn>=0.27

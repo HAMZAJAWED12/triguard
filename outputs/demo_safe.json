@@ -1,0 +1,61 @@
+{
+  "risk_score": 0.3678,
+  "risk_label": "borderline",
+  "flagged_modalities": [],
+  "rationale": "the text appeared benign (toxicity 0.37). the image caption 'a generic photo described as 'community park clean'' showed no obvious risk cues. audio events: speech, speech",
+  "uncertainties": [
+    "low_text_classifier_confidence",
+    "low_image_caption_confidence"
+  ],
+  "recommended_action": "review",
+  "text_evidence": {
+    "toxicity_score": 0.3678,
+    "top_labels": [],
+    "confidence": 0.2643,
+    "raw": {
+      "mode": "real",
+      "classifier": "sklearn-tfidf-lr",
+      "prob": 0.36784484193670386
+    }
+  },
+  "image_evidence": {
+    "caption": "a generic photo described as 'community park clean'",
+    "visual_risk_cues": [],
+    "confidence": 0.4,
+    "raw": {
+      "mode": "mock",
+      "path": "/data/community_park_clean.jpg",
+      "stem_tokens": [
+        "community",
+        "park",
+        "clean"
+      ]
+    }
+  },
+  "audio_evidence": {
+    "transcript": "sample speech about calm speech volunteers",
+    "transcript_confidence": 0.6,
+    "yamnet_tags": [
+      [
+        "speech",
+        0.6
+      ],
+      [
+        "speech",
+        0.7
+      ]
+    ],
+    "raw": {
+      "mode": "mock",
+      "path": "/data/calm_speech_volunteers.wav"
+    }
+  },
+  "latency_ms": 13,
+  "model_versions": {
+    "orchestrator": "0.1.0-tier-a",
+    "text_model": "sklearn-tfidf-lr-v1",
+    "image_model": "mock-v1",
+    "audio_model": "mock-v1",
+    "llm_judge": "rule-based-v1"
+  }
+}

@@ -1,0 +1,247 @@
+{
+  "run_at": "2026-06-08T18:09:39.305366+00:00",
+  "n_samples": 14,
+  "judge_mode": "rule",
+  "accuracy": 1.0,
+  "macro_f1": 1.0,
+  "per_class": {
+    "safe": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "borderline": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "harmful": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  },
+  "confusion_matrix": {
+    "safe": {
+      "safe": 5,
+      "borderline": 0,
+      "harmful": 0
+    },
+    "borderline": {
+      "safe": 0,
+      "borderline": 4,
+      "harmful": 0
+    },
+    "harmful": {
+      "safe": 0,
+      "borderline": 0,
+      "harmful": 5
+    }
+  },
+  "latency_ms": {
+    "p50": 1,
+    "p95": 2,
+    "min": 0,
+    "max": 12
+  },
+  "schema_validity_rate": 1.0,
+  "limitations": [
+    "evaluation set is small (15 hand-built items) and English-only",
+    "image and audio wrappers are mocks; image cues are derived from filenames",
+    "judge is rule-based; Ollama path is implemented but not measured here",
+    "labels reflect the author's judgement; no inter-rater agreement available"
+  ],
+  "results": [
+    {
+      "id": "S1",
+      "true_label": "safe",
+      "pred_label": "safe",
+      "risk_score": 0.2874,
+      "flagged_modalities": [],
+      "recommended_action": "allow",
+      "rationale": "the text appeared benign (toxicity 0.29)",
+      "uncertainties": [],
+      "latency_ms": 12
+    },
+    {
+      "id": "S2",
+      "true_label": "safe",
+      "pred_label": "safe",
+      "risk_score": 0.1845,
+      "flagged_modalities": [],
+      "recommended_action": "allow",
+      "rationale": "the text appeared benign (toxicity 0.18)",
+      "uncertainties": [],
+      "latency_ms": 1
+    },
+    {
+      "id": "S3",
+      "true_label": "safe",
+      "pred_label": "safe",
+      "risk_score": 0.2409,
+      "flagged_modalities": [],
+      "recommended_action": "allow",
+      "rationale": "the text appeared benign (toxicity 0.24)",
+      "uncertainties": [],
+      "latency_ms": 0
+    },
+    {
+      "id": "S4",
+      "true_label": "safe",
+      "pred_label": "safe",
+      "risk_score": 0.3024,
+      "flagged_modalities": [],
+      "recommended_action": "allow",
+      "rationale": "the text appeared benign (toxicity 0.30). the image caption 'a generic photo described as 'calm lake photo'' showed no obvious risk cues. audio events: speech, speech",
+      "uncertainties": [
+        "low_text_classifier_confidence",
+        "low_image_caption_confidence"
+      ],
+      "latency_ms": 1
+    },
+    {
+      "id": "S5",
+      "true_label": "safe",
+      "pred_label": "safe",
+      "risk_score": 0.3215,
+      "flagged_modalities": [],
+      "recommended_action": "allow",
+      "rationale": "the text appeared benign (toxicity 0.32). the image caption 'a generic photo described as 'quiet library books'' showed no obvious risk cues",
+      "uncertainties": [
+        "low_text_classifier_confidence",
+        "low_image_caption_confidence"
+      ],
+      "latency_ms": 1
+    },
+    {
+      "id": "B1",
+      "true_label": "borderline",
+      "pred_label": "borderline",
+      "risk_score": 0.6,
+      "flagged_modalities": [
+        "text"
+      ],
+      "recommended_action": "review",
+      "rationale": "the text classifier flagged toxicity at 0.60 (insult)",
+      "uncertainties": [
+        "low_text_classifier_confidence"
+      ],
+      "latency_ms": 0
+    },
+    {
+      "id": "B2",
+      "true_label": "borderline",
+      "pred_label": "borderline",
+      "risk_score": 0.5488,
+      "flagged_modalities": [
+        "text"
+      ],
+      "recommended_action": "review",
+      "rationale": "the text classifier flagged toxicity at 0.55 (toxic)",
+      "uncertainties": [
+        "low_text_classifier_confidence"
+      ],
+      "latency_ms": 1
+    },
+    {
+      "id": "B3",
+      "true_label": "borderline",
+      "pred_label": "borderline",
+      "risk_score": 0.6,
+      "flagged_modalities": [
+        "image"
+      ],
+      "recommended_action": "review",
+      "rationale": "the text appeared benign (toxicity 0.37). the image caption 'an image apparently depicting weapon' mentioned weapon",
+      "uncertainties": [
+        "low_text_classifier_confidence"
+      ],
+      "latency_ms": 2
+    },
+    {
+      "id": "B4",
+      "true_label": "borderline",
+      "pred_label": "borderline",
+      "risk_score": 0.4121,
+      "flagged_modalities": [],
+      "recommended_action": "review",
+      "rationale": "the text appeared benign (toxicity 0.41). audio events: speech",
+      "uncertainties": [
+        "low_text_classifier_confidence"
+      ],
+      "latency_ms": 1
+    },
+    {
+      "id": "H1",
+      "true_label": "harmful",
+      "pred_label": "harmful",
+      "risk_score": 0.8133,
+      "flagged_modalities": [
+        "text"
+      ],
+      "recommended_action": "block",
+      "rationale": "the text classifier flagged toxicity at 0.81 (insult)",
+      "uncertainties": [],
+      "latency_ms": 1
+    },
+    {
+      "id": "H2",
+      "true_label": "harmful",
+      "pred_label": "harmful",
+      "risk_score": 0.6765,
+      "flagged_modalities": [
+        "text"
+      ],
+      "recommended_action": "block",
+      "rationale": "the text classifier flagged toxicity at 0.68 (threat)",
+      "uncertainties": [
+        "low_text_classifier_confidence"
+      ],
+      "latency_ms": 1
+    },
+    {
+      "id": "H3",
+      "true_label": "harmful",
+      "pred_label": "harmful",
+      "risk_score": 0.7549,
+      "flagged_modalities": [
+        "text"
+      ],
+      "recommended_action": "block",
+      "rationale": "the text classifier flagged toxicity at 0.75 (insult)",
+      "uncertainties": [],
+      "latency_ms": 1
+    },
+    {
+      "id": "H4",
+      "true_label": "harmful",
+      "pred_label": "harmful",
+      "risk_score": 0.9039,
+      "flagged_modalities": [
+        "audio",
+        "image",
+        "text"
+      ],
+      "recommended_action": "block",
+      "rationale": "the text classifier flagged toxicity at 0.75 (toxic). the image caption 'an image apparently depicting weapon' mentioned weapon. audio analysis detected shouting",
+      "uncertainties": [
+        "low_audio_transcript_confidence"
+      ],
+      "latency_ms": 1
+    },
+    {
+      "id": "H5",
+      "true_label": "harmful",
+      "pred_label": "harmful",
+      "risk_score": 0.8666,
+      "flagged_modalities": [
+        "image",
+        "text"
+      ],
+      "recommended_action": "block",
+      "rationale": "the text classifier flagged toxicity at 0.72 (insult). the image caption 'an image apparently depicting hate_symbol' mentioned hate_symbol",
+      "uncertainties": [],
+      "latency_ms": 0
+    }
+  ]
+}
