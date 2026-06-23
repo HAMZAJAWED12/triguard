@@ -181,7 +181,7 @@
 - Slow test `tests/test_audio_model_real.py` (skips until a public-domain WAV is
   dropped at `data/sample_inputs/audio_test.wav`).
 - `[audio]` optional extra (whisper, tensorflow, tensorflow-hub, librosa,
-  soundfile) kept out of requirements/[eval] (py3.12-only); `.venv-audio`
+  soundfile) kept out of requirements/[eval] (py3.12-only); `~/.venv-triguard-audio`
   gitignored; `scripts/run_wsl_sprint3.sh` (uv → py3.12).
 
 ### Problems encountered
@@ -189,7 +189,7 @@
   py3.12 venv (no sudo) for the audio stack only.
 
 ### Decisions made
-- D-014: add real audio tier; mock stays offline default; py3.12 .venv-audio.
+- D-014: add real audio tier; mock stays offline default; py3.12 ~/.venv-triguard-audio.
 
 ### Tests/evidence produced
 - Fast suite green; audio stack import smoke + slow test (pending the WAV clip).

@@ -14,7 +14,7 @@ test suite stays offline. Whisper variant via TRIGUARD_WHISPER_MODEL (default
 "tiny"; e.g. "small"). Whisper needs ffmpeg on PATH for file decoding.
 
 Real audio needs Python <= 3.12 (TensorFlow / numba have no 3.14 wheels); see
-scripts/run_wsl_sprint3.sh which provisions a py3.12 .venv-audio via uv.
+scripts/run_wsl_sprint3.sh which provisions a py3.12 ~/.venv-triguard-audio via uv.
 """
 from __future__ import annotations
 

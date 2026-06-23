@@ -125,10 +125,10 @@ sprint — not run here.
 Whisper (`openai-whisper`, `tiny` default) + YAMNet (TF-Hub `yamnet/1`).
 **Python constraint:** TensorFlow / numba have no Python 3.14 wheels (the WSL
 default), so the audio stack runs in a uv-provisioned standalone **Python 3.12**
-venv `.venv-audio` (gitignored). ffmpeg (system) is required by Whisper.
+venv `~/.venv-triguard-audio` (gitignored). ffmpeg (system) is required by Whisper.
 
 ```bash
-bash scripts/run_wsl_sprint3.sh   # uv -> py3.12 .venv-audio, installs audio stack, fast + slow audio test
+bash scripts/run_wsl_sprint3.sh   # uv -> py3.12 ~/.venv-triguard-audio, installs audio stack, fast + slow audio test
 ```
 
 - `transcript_confidence` = mean `exp(segment.avg_logprob)` over Whisper
@@ -138,7 +138,11 @@ bash scripts/run_wsl_sprint3.sh   # uv -> py3.12 .venv-audio, installs audio sta
 - Per-component fallback: if Whisper or TF/YAMNet is unavailable that half
   degrades to the mock and is flagged in `raw`; `mode` becomes
   `real-audio-partial`.
-- Slow test `tests/test_audio_model_real.py` skips until a public-domain clip is
-  committed at `data/sample_inputs/audio_test.wav`.
+- Slow test `tests/test_audio_model_real.py` runs against a committed
+  public-domain clip at `data/sample_inputs/audio_test.wav` (generated with
+  `espeak-ng` TTS, so the transcript is approximate on whisper-tiny). Verified
+  run (`~/.venv-triguard-audio`, py3.12, tf 2.21.0 CPU): transcript ≈ "the quick
+  brown fox jumps over the lazy dog near the river bank", `transcript_confidence`
+  0.523, `yamnet_tags` `[('Speech', 0.8602)]`, `mode` `real-audio`.
 
 Real-data audio evaluation (T4, AudioSet subset) is a separate later sprint.

@@ -7,7 +7,7 @@ Marked @pytest.mark.slow, skipped by default (see tests/conftest.py). Run with:
 
 Needs a committed short public-domain speech clip at
 data/sample_inputs/audio_test.wav; the test SKIPS if it is absent (drop one in
-to enable). Requires the py3.12 .venv-audio (Whisper + TensorFlow/YAMNet) — see
+to enable). Requires the py3.12 ~/.venv-triguard-audio (Whisper + TensorFlow/YAMNet) — see
 scripts/run_wsl_sprint3.sh. Asserts shape only — no hardcoded transcript.
 """
 from __future__ import annotations

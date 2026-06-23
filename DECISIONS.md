@@ -192,7 +192,7 @@ degrades to the mock **independently** (`raw["whisper_fallback"]` /
 missing backend never crashes. Mock stays the offline default;
 `force_mode="real"` / `TRIGUARD_AUDIO_BACKEND=real` opts in.
 Env: TensorFlow / numba have no Python 3.14 wheels (the WSL default), so real
-audio runs in a uv-provisioned **py3.12** venv `.venv-audio`
+audio runs in a uv-provisioned **py3.12** venv `~/.venv-triguard-audio`
 (`scripts/run_wsl_sprint3.sh`). ffmpeg required by Whisper.
 Impact: real tier in `audio_model.py`; new `[audio]` optional extra
 (openai-whisper, tensorflow, tensorflow-hub, librosa, soundfile) kept OUT of
