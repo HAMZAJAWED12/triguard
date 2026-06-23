@@ -64,7 +64,8 @@ document that is not present in that file.
 | Text wrapper (mock) | deterministic keyword heuristic | `TRIGUARD_MOCK=1` or `force_mode="mock"`. |
 | Image wrapper (blip tier) | `Salesforce/blip-image-captioning-base`, revision `82a37760796d32b1411fe092ab5d4e227313294b` | Caption via BLIP; `visual_risk_cues` from keyword vocab; long edge downscaled ≤ 1024 px; `confidence` = mean greedy-token softmax prob (fallback 0.6, tagged `raw["confidence_fallback"]`); `raw["mode"]="real-blip"`. ~990 MB weights, lazy transformers/PIL, `lru_cache`d. Select via `force_mode="blip"` / `TRIGUARD_IMAGE_BACKEND=blip`. RAM observed: _pending_. |
 | Image wrapper (mock) | filename-derived caption + cues | offline default; `TRIGUARD_MOCK=1` or `force_mode="mock"`. |
-| Audio wrapper | mock (filename-derived cues) | Real Whisper / YAMNet are Sprint 3 (see `docs/CLAUDE_CODE_PROMPTS.md` Prompt 3). |
+| Audio wrapper (real tier) | Whisper (`tiny` default, `small` via `TRIGUARD_WHISPER_MODEL`) + YAMNet (TF-Hub `yamnet/1`) | Transcript via Whisper; `transcript_confidence` = mean `exp(seg.avg_logprob)` clamped; `yamnet_tags` = top-5 classes > 0.2 (60 s chunks averaged); per-component fallback to mock (`raw["whisper_fallback"]`/`["yamnet_fallback"]`; `mode` `real-audio`/`real-audio-partial`). Needs py3.12 + ffmpeg. Select via `force_mode="real"` / `TRIGUARD_AUDIO_BACKEND=real`. RAM observed: _pending_. |
+| Audio wrapper (mock) | filename-derived transcript + tags | offline default; `TRIGUARD_MOCK=1` or `force_mode="mock"`. |
 | LLM judge | rule-based (default) + Ollama path | Ollama falls back to the rule judge on failure. |
 
 ### Sprint 1 — real text model (toxic-bert)
@@ -118,3 +119,26 @@ bash scripts/run_wsl_sprint2.sh   # generates data/sample_inputs/blip_test.png, 
 
 Real-data image evaluation (T3, Hateful Memes / MMHS150K) is a separate later
 sprint — not run here.
+
+### Sprint 3 — real audio model (Whisper + YAMNet)
+
+Whisper (`openai-whisper`, `tiny` default) + YAMNet (TF-Hub `yamnet/1`).
+**Python constraint:** TensorFlow / numba have no Python 3.14 wheels (the WSL
+default), so the audio stack runs in a uv-provisioned standalone **Python 3.12**
+venv `.venv-audio` (gitignored). ffmpeg (system) is required by Whisper.
+
+```bash
+bash scripts/run_wsl_sprint3.sh   # uv -> py3.12 .venv-audio, installs audio stack, fast + slow audio test
+```
+
+- `transcript_confidence` = mean `exp(segment.avg_logprob)` over Whisper
+  segments, clamped to [0,1].
+- `yamnet_tags`: top-5 YAMNet classes with mean score > 0.2 (audio chunked into
+  60 s windows, scores averaged).
+- Per-component fallback: if Whisper or TF/YAMNet is unavailable that half
+  degrades to the mock and is flagged in `raw`; `mode` becomes
+  `real-audio-partial`.
+- Slow test `tests/test_audio_model_real.py` skips until a public-domain clip is
+  committed at `data/sample_inputs/audio_test.wav`.
+
+Real-data audio evaluation (T4, AudioSet subset) is a separate later sprint.

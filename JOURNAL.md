@@ -166,3 +166,34 @@
 
 ### Next steps
 - Sprint 3 — real audio wrapper (Whisper + YAMNet).
+
+---
+
+## Week 9 — Real audio model (Sprint 3)
+### Planned work
+- Make the audio wrapper real: Whisper transcription + YAMNet tagging, keep
+  mock default.
+
+### Completed work
+- Added `"real"` tier to `audio_model.py` (Whisper `tiny`/`small` +
+  TF-Hub `yamnet/1`); transcript_confidence from `avg_logprob`; top-5 tags >0.2;
+  per-component fallback to mock; auto-degrade never crashes.
+- Slow test `tests/test_audio_model_real.py` (skips until a public-domain WAV is
+  dropped at `data/sample_inputs/audio_test.wav`).
+- `[audio]` optional extra (whisper, tensorflow, tensorflow-hub, librosa,
+  soundfile) kept out of requirements/[eval] (py3.12-only); `.venv-audio`
+  gitignored; `scripts/run_wsl_sprint3.sh` (uv → py3.12).
+
+### Problems encountered
+- WSL default is Python 3.14 → no TF/numba wheels. Resolved with a uv-provisioned
+  py3.12 venv (no sudo) for the audio stack only.
+
+### Decisions made
+- D-014: add real audio tier; mock stays offline default; py3.12 .venv-audio.
+
+### Tests/evidence produced
+- Fast suite green; audio stack import smoke + slow test (pending the WAV clip).
+
+### Next steps
+- All three perception models now have real tiers. Optional: T3/T4 real-data
+  evaluation; HF/CPU repins; FastAPI demo (Prompt 5).

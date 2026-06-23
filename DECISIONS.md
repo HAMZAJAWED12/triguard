@@ -176,3 +176,27 @@ Impact: new `blip` tier in `image_model.py`; `pillow` dep; slow test
 `tests/test_image_model_blip.py` on a committed synthetic public-domain image;
 run via WSL `.venv-linux` (Application Control blocks torch on Windows). Fast
 suite stays 23 passed (+ slow blip test skipped). No T3 eval yet (separate sprint).
+
+## Decision 014: Audio wrapper — real Whisper + YAMNet tier
+Date: 2026-06-23
+Status: accepted
+
+Context: Sprint 3, the last perception modality. The audio wrapper was a
+filename-derived mock.
+Decision: Add a `"real"` tier — OpenAI Whisper transcription (`tiny` default,
+`small` via `TRIGUARD_WHISPER_MODEL`) + YAMNet audio-event tagging
+(TF-Hub `yamnet/1`; top-5 classes > 0.2; 60 s chunks averaged). `transcript_confidence`
+= mean `exp(segment.avg_logprob)` clamped [0,1] (not a constant). Each component
+degrades to the mock **independently** (`raw["whisper_fallback"]` /
+`raw["yamnet_fallback"]`; `mode` `real-audio` or `real-audio-partial`), so a
+missing backend never crashes. Mock stays the offline default;
+`force_mode="real"` / `TRIGUARD_AUDIO_BACKEND=real` opts in.
+Env: TensorFlow / numba have no Python 3.14 wheels (the WSL default), so real
+audio runs in a uv-provisioned **py3.12** venv `.venv-audio`
+(`scripts/run_wsl_sprint3.sh`). ffmpeg required by Whisper.
+Impact: real tier in `audio_model.py`; new `[audio]` optional extra
+(openai-whisper, tensorflow, tensorflow-hub, librosa, soundfile) kept OUT of
+`requirements.txt`/`[eval]` so installs on Python 3.13+ don't break; slow test
+`tests/test_audio_model_real.py` (skips until a committed public-domain WAV is
+added at `data/sample_inputs/audio_test.wav`). Fast suite stays 23 passed
+(+ slow audio test skipped). No T4 eval yet (separate sprint).

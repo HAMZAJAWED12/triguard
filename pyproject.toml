@@ -21,6 +21,16 @@ eval = [
     "torch>=2.2,<3",
     "pillow>=10,<12",
 ]
+# Sprint 3 — real audio (Whisper + YAMNet). REQUIRES Python <= 3.12
+# (TensorFlow / numba have no 3.14 wheels). Install into a py3.12 venv;
+# see scripts/run_wsl_sprint3.sh (uv-provisioned .venv-audio). Needs ffmpeg.
+audio = [
+    "openai-whisper>=20231117",
+    "tensorflow>=2.15,<3",
+    "tensorflow-hub>=0.16",
+    "librosa>=0.10,<1",
+    "soundfile>=0.12",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

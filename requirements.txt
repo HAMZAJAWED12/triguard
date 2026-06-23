@@ -12,6 +12,10 @@ transformers>=4.40,<5
 torch>=2.2,<3
 # Sprint 2 — real image model (BLIP captioning)
 pillow>=10,<12
+# Sprint 3 — real audio (Whisper + YAMNet) lives in the [audio] extra, NOT here:
+# it needs Python <= 3.12 (no TF/numba 3.14 wheels) + ffmpeg. Install via
+# scripts/run_wsl_sprint3.sh (uv py3.12 .venv-audio). Adding it here would break
+# installs on Python 3.13+.
 # optional — uncomment when integrating real models
 # accelerate>=0.30
 # fastapi>=0.110
