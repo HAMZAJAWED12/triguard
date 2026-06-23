@@ -10,6 +10,8 @@ datasets>=2.18,<4
 --extra-index-url https://download.pytorch.org/whl/cpu
 transformers>=4.40,<5
 torch>=2.2,<3
+# Sprint 2 — real image model (BLIP captioning)
+pillow>=10,<12
 # optional — uncomment when integrating real models
 # accelerate>=0.30
 # fastapi>=0.110

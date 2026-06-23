@@ -18,7 +18,8 @@ env/
 *.pt
 *.pth
 *.safetensors
-models/
+# repo-root weights dir only — must NOT shadow the src/triguard/models/ package
+/models/
 .cache/
 
 # --- Real dataset downloads (evaluation track T2) ---

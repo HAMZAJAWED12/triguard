@@ -142,3 +142,27 @@
 
 ### Next steps
 - Sprint 2 — real image wrapper (BLIP captioning).
+
+---
+
+## Week 8 — Real image model (Sprint 2)
+### Planned work
+- Make the image wrapper real: add a BLIP captioning tier, keep mock default.
+
+### Completed work
+- Added `"blip"` tier to `image_model.py`
+  (`Salesforce/blip-image-captioning-base`, pinned rev `82a3776…`); caption +
+  keyword-vocab cues; downscale ≤1024; confidence from generation scores
+  (fallback 0.6, tagged in `raw`); auto-fallback to mock.
+- Slow test `tests/test_image_model_blip.py` on a committed synthetic
+  public-domain image (`data/sample_inputs/blip_test.png`).
+- `pillow` dep (+ `[eval]`); `scripts/run_wsl_sprint2.sh`.
+
+### Decisions made
+- D-013: add BLIP tier; mock stays offline default.
+
+### Tests/evidence produced
+- Fast suite green; slow BLIP test produces a non-empty caption (run via WSL).
+
+### Next steps
+- Sprint 3 — real audio wrapper (Whisper + YAMNet).

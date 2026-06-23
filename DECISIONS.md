@@ -155,3 +155,24 @@ Result (T2, Civil Comments, 500 rows, seed 42, `run_env=wsl-ubuntu`, model
 frozen sklearn baseline 0.542 / 0.415 (toxic P 0.08 / R 0.59 / F1 0.14). hf wins
 overall + stops over-flagging (toxic precision 0.08→0.41) but has lower toxic
 recall (0.59→0.28). Both result dirs kept (`074102` sklearn, `124802` hf).
+
+## Decision 013: Image wrapper — real BLIP tier
+Date: 2026-06-23
+Status: accepted
+
+Context: Sprint 2 of making the perception models real. The image wrapper was a
+filename-derived mock.
+Decision: Add a `"blip"` tier = `Salesforce/blip-image-captioning-base`
+(revision `82a37760796d32b1411fe092ab5d4e227313294b`), lazy-imported
+transformers/PIL/torch, `lru_cache`d, auto-fallback to mock. Keep the mock as the
+**offline default**. `force_mode="blip"` or `TRIGUARD_IMAGE_BACKEND=blip` opts in.
+Caption from BLIP; `visual_risk_cues` from a documented keyword vocab
+(weapon, violence, hate_symbol, drug, nudity_warning) scanned over the caption;
+images downscaled to long-edge ≤ 1024 px; `confidence` = mean greedy-token
+softmax probability from generation (fallback 0.6, tagged `raw["confidence_fallback"]`).
+Reason: keeps the fast suite offline (mock default), mirrors the Sprint-1 text
+pattern; BLIP is the headline real image model behind an explicit opt-in.
+Impact: new `blip` tier in `image_model.py`; `pillow` dep; slow test
+`tests/test_image_model_blip.py` on a committed synthetic public-domain image;
+run via WSL `.venv-linux` (Application Control blocks torch on Windows). Fast
+suite stays 23 passed (+ slow blip test skipped). No T3 eval yet (separate sprint).

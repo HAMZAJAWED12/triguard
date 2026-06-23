@@ -19,6 +19,7 @@ eval = [
     "numpy>=1.24,<2",
     "transformers>=4.40,<5",
     "torch>=2.2,<3",
+    "pillow>=10,<12",
 ]
 
 [tool.setuptools.packages.find]

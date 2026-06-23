@@ -62,7 +62,9 @@ document that is not present in that file.
 | Text wrapper (hf tier) | `unitary/toxic-bert`, revision `4d6c22e74ba2fdd26bc4f7238f50766b045a0d94` | Multi-label sigmoid heads (toxic, severe_toxic, obscene, threat, insult, identity_hate). `toxicity_score` = `toxic` head; `top_labels` = heads ≥ 0.5; `raw["mode"]="real-hf"`. ~440 MB weights, lazy transformers/torch, `lru_cache`d. Select via `force_mode="hf"` or `TRIGUARD_TEXT_BACKEND=hf`. RAM observed: _pending CPU run_ (Sprint-1 hf ran on WSL GPU, cuda:0). |
 | Text wrapper (sklearn tier) | sklearn `TfidfVectorizer(ngram_range=(1,2))` + `LogisticRegression(C=4.0, max_iter=500)` | Trained at runtime on 30 bundled examples; offline default + sanity floor. `force_mode="real"` aliases this. No persisted weights. |
 | Text wrapper (mock) | deterministic keyword heuristic | `TRIGUARD_MOCK=1` or `force_mode="mock"`. |
-| Image / audio wrappers | mock (filename-derived cues) | Real BLIP / Whisper / YAMNet are future work (see `docs/CLAUDE_CODE_PROMPTS.md` Prompts 2–3). |
+| Image wrapper (blip tier) | `Salesforce/blip-image-captioning-base`, revision `82a37760796d32b1411fe092ab5d4e227313294b` | Caption via BLIP; `visual_risk_cues` from keyword vocab; long edge downscaled ≤ 1024 px; `confidence` = mean greedy-token softmax prob (fallback 0.6, tagged `raw["confidence_fallback"]`); `raw["mode"]="real-blip"`. ~990 MB weights, lazy transformers/PIL, `lru_cache`d. Select via `force_mode="blip"` / `TRIGUARD_IMAGE_BACKEND=blip`. RAM observed: _pending_. |
+| Image wrapper (mock) | filename-derived caption + cues | offline default; `TRIGUARD_MOCK=1` or `force_mode="mock"`. |
+| Audio wrapper | mock (filename-derived cues) | Real Whisper / YAMNet are Sprint 3 (see `docs/CLAUDE_CODE_PROMPTS.md` Prompt 3). |
 | LLM judge | rule-based (default) + Ollama path | Ollama falls back to the rule judge on failure. |
 
 ### Sprint 1 — real text model (toxic-bert)
@@ -90,3 +92,29 @@ revision `4d6c22e74ba2fdd26bc4f7238f50766b045a0d94`):
 hf wins on accuracy + macro-F1 and curbs over-flagging (toxic precision
 0.08→0.41); toxic recall drops (0.59→0.28). Toxic class is small (32/500) so its
 F1 is noisy. Both dirs retained.
+
+### Sprint 2 — real image model (BLIP)
+
+`Salesforce/blip-image-captioning-base` pinned to revision
+`82a37760796d32b1411fe092ab5d4e227313294b` in `image_model.py` (`_BLIP_REVISION`).
+Weights download to the Hugging Face cache (gitignored, outside the repo).
+`visual_risk_cues` keyword vocab (substring match on the lowercased caption):
+
+| cue | keywords |
+|---|---|
+| weapon | gun, rifle, pistol, knife, weapon |
+| violence | blood, fight, punch, attack |
+| hate_symbol | swastika, nazi |
+| drug | syringe, needle, cocaine, drug |
+| nudity_warning | nude, naked |
+
+`confidence` = mean greedy-token softmax probability from `generate(output_scores=True)`
+(clamped to [0,1]); if scores are unavailable it falls back to 0.6 and tags
+`raw["confidence_fallback"]=True`. Run (WSL, reuses `.venv-linux`):
+
+```bash
+bash scripts/run_wsl_sprint2.sh   # generates data/sample_inputs/blip_test.png, runs fast + slow blip test
+```
+
+Real-data image evaluation (T3, Hateful Memes / MMHS150K) is a separate later
+sprint — not run here.
