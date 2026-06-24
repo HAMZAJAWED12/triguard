@@ -73,7 +73,7 @@ def _mock_analyse(image: ImageInput) -> ImageEvidence:
             confidence=0.4,
             raw={"mode": "mock", "source": "bytes"},
         )
-    path = Path(image)
+    path = Path(image)  # pyright: ignore[reportArgumentType]  # bytes handled above
     name = path.stem.lower().replace("-", " ").replace("_", " ")
     cues = _cues_from_text(name)
     if cues:
@@ -107,7 +107,7 @@ def _open_image(image: ImageInput):
     from PIL import Image  # lazy
 
     if isinstance(image, (bytes, bytearray)):
-        img = Image.open(io.BytesIO(image))
+        img = Image.open(io.BytesIO(bytes(image)))
     else:
         img = Image.open(Path(image))
     img = img.convert("RGB")
@@ -129,7 +129,7 @@ def _blip_analyse(image: ImageInput) -> ImageEvidence:
 
     import torch  # available once BLIP loaded
 
-    inputs = processor(img, return_tensors="pt")
+    inputs = processor(img, return_tensors="pt")  # pyright: ignore[reportCallIssue]
     with torch.no_grad():
         out = model.generate(
             **inputs,
@@ -137,7 +137,7 @@ def _blip_analyse(image: ImageInput) -> ImageEvidence:
             output_scores=True,
             return_dict_in_generate=True,
         )
-    caption = processor.decode(out.sequences[0], skip_special_tokens=True).strip()
+    caption = processor.decode(out.sequences[0], skip_special_tokens=True).strip()  # pyright: ignore[reportAttributeAccessIssue]
 
     # Confidence from generation: mean greedy-token softmax probability.
     confidence = _BLIP_CONF_FALLBACK

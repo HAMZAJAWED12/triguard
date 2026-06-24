@@ -211,7 +211,7 @@ def _hf_analyse(text: str) -> TextEvidence:
     # pipeline(top_k=None) returns list[dict] for one input, or list[list[dict]].
     if results and isinstance(results[0], list):
         results = results[0]
-    scores = {d["label"].lower(): float(d["score"]) for d in results}
+    scores = {d["label"].lower(): float(d["score"]) for d in results}  # pyright: ignore[reportArgumentType, reportIndexIssue]
 
     tox = scores.get("toxic", 0.0)
     top_labels = sorted(lbl for lbl, sc in scores.items() if sc >= 0.5)

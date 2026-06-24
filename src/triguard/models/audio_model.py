@@ -68,7 +68,7 @@ def _mock_analyse(audio: AudioInput) -> AudioEvidence:
             yamnet_tags=[],
             raw={"mode": "mock", "source": "bytes"},
         )
-    path = Path(audio)
+    path = Path(audio)  # pyright: ignore[reportArgumentType]  # bytes handled above
     name = path.stem.lower().replace("-", " ").replace("_", " ")
     tags: list[tuple[str, float]] = []
     for token, (label, conf) in _AUDIO_TAGS.items():
@@ -103,7 +103,7 @@ def _load_waveform(audio: AudioInput):
         if sr != _SR:
             data = librosa.resample(data, orig_sr=sr, target_sr=_SR)
         return data
-    wav, _ = librosa.load(str(Path(audio)), sr=_SR, mono=True)
+    wav, _ = librosa.load(str(Path(audio)), sr=_SR, mono=True)  # pyright: ignore[reportArgumentType]  # bytes handled above
     return wav.astype(np.float32)
 
 
@@ -165,12 +165,11 @@ def _tag(wav):
             return []
         win = _SR * _MAX_SECONDS
         chunks = [wav[i:i + win] for i in range(0, len(wav), win)] or [wav]
-        agg = None
+        per_chunk = []
         for c in chunks:
             scores, _, _ = model(c)
-            mean_c = np.mean(scores.numpy(), axis=0)
-            agg = mean_c if agg is None else agg + mean_c
-        mean = agg / len(chunks)
+            per_chunk.append(np.mean(scores.numpy(), axis=0))
+        mean = np.mean(np.stack(per_chunk), axis=0)
         order = mean.argsort()[::-1]
         return [
             (names[i], float(round(float(mean[i]), 4)))

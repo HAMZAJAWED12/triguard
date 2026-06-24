@@ -39,6 +39,9 @@ where = ["src"]
 # Put the src/ layout on the path so Pylint resolves `triguard.*` imports
 # (kills the spurious E0401 import-error reports). Mirrors PYTHONPATH=src.
 init-hook = 'import sys; sys.path.insert(0, "src")'
+# Optional heavy ML libs are lazy-imported and live only in the WSL venvs
+# (.venv-linux / ~/.venv-triguard-audio), not the Windows .venv — don't flag them.
+ignored-modules = ["librosa", "soundfile", "whisper", "tensorflow", "tensorflow_hub", "PIL"]
 
 [tool.pylint.messages_control]
 # Disable checks that clash with this project's documented house style:
@@ -54,3 +57,11 @@ disable = [
     "missing-class-docstring",
     "missing-function-docstring",
 ]
+
+[tool.pyright]
+# Optional heavy ML libs (librosa/whisper/tensorflow/PIL/...) are lazy-imported
+# and absent from the Windows interpreter VS Code analyses with — they install
+# only in the WSL venvs. Silence the resulting missing-import noise; runtime is
+# guarded with per-component fallbacks and verified green in WSL.
+reportMissingImports = "none"
+reportMissingModuleSource = "none"
