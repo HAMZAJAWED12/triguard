@@ -238,3 +238,38 @@
 ### Next steps
 - Optional: combined py3.12 tri-modal venv; T3/T4 real-data eval; FastAPI demo;
   Preliminary Report assembly.
+
+---
+
+## Week 11 — Single-process tri-modal integration (~/.venv-tri)
+### Planned work
+- Build one py3.12 CPU venv running text + image + audio + the Ollama judge in a
+  single orchestrator pass; capture an all-real TriGuardResult.
+
+### Completed work
+- `scripts/build_venv_tri.sh` — uv py3.12 `~/.venv-tri` (CPU torch first), full stack.
+- `requirements-full.txt` — 95 exact pins (Python 3.12.13).
+- `data/sample_inputs/sample_multimodal_real.json` — real toxic text + committed
+  synthetic image/audio.
+- One-pass all-real run captured (`outputs/demo_full_real.json`) + graceful-fallback
+  run (`outputs/demo_harmful_fallback.json`); Sprint-5 section in
+  `docs/implementation_notes.md`.
+
+### Problems encountered
+- SIGSEGV: `transformers` eagerly imports TensorFlow when both frameworks are
+  installed -> torch+TF crash on pipeline run. Isolated to the text step; fixed
+  environment-only with `USE_TF=0` (no code change). KMP/OMP/MKL flags did not help.
+
+### Decisions made
+- D-016: combined `~/.venv-tri` + `USE_TF=0` guard; schema/wrappers/Windows `.venv`
+  untouched.
+
+### Tests/evidence produced
+- Import proof (all eight libs, one process). Fast suite 23 passed / 6 skipped in
+  the new venv. All-real TriGuardResult: real-hf 0.9751, real-blip caption,
+  real-audio Whisper+YAMNet, llama3 harmful/block grounded. RAM 2.98 GB + 5.3 GB
+  VRAM; latency_ms 49421 cold.
+
+### Next steps
+- Optional: fix `model_versions` reporting (pipeline); T3/T4 real-data eval;
+  FastAPI demo; Preliminary Report assembly.

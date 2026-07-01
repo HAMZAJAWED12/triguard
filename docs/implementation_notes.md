@@ -205,3 +205,86 @@ omitted the audio modality from its flags; its risk_score 0.73 is high for a
 `borderline` label (still schema-valid). Fallback verified: cold-load timeout ->
 `ollama_unavailable:TimeoutError`; server stopped -> `ollama_unavailable:[Errno
 111] Connection refused`; both degraded to the rule judge without crashing.
+
+### Sprint 5 — combined tri-modal venv (`~/.venv-tri`)
+
+Until now the real backends lived in separate venvs (py3.14 text+image; py3.12
+audio) — no single process ran all of them. Sprint 5 builds ONE Python 3.12 CPU
+environment that runs text + image + audio + the Ollama judge in a single
+orchestrator pass, purely as integration infrastructure. No code, schema or
+wrapper changes.
+
+**Build:** `scripts/build_venv_tri.sh` (uv-provisioned py3.12 `~/.venv-tri` in
+`$HOME`, off OneDrive; CPU torch installed first so nothing pulls the CUDA stack).
+Model weights come from the shared HF / Whisper / TF-Hub caches populated in
+Sprints 1-3, so the build installs wheels only. Windows `.venv` and its offline
+defaults are untouched. Exact pins in `requirements-full.txt` (Python 3.12.13).
+
+Import proof (one process): numpy 1.26.4, torch 2.12.1+cpu, transformers 4.57.6,
+pillow 11.3.0, openai-whisper 20250625, tensorflow 2.21.0, tensorflow-hub 0.16.1,
+scikit-learn 1.5.2, pydantic 2.13.4.
+
+**numpy/protobuf + the torch/TF segfault.** `numpy<2` (resolved 1.26.4) keeps
+sklearn + torch happy; TensorFlow 2.21 accepts it. protobuf resolved to 7.35.1
+(TF-driven) with no conflict. The real trap was a **SIGSEGV**: with both torch and
+TensorFlow installed, `transformers` eagerly imports TF when a pipeline runs, and
+the torch+TF interaction crashes the process (verified: the crash is at the
+toxic-bert step, before our audio code loads TF; isolating it, plain torch+TF ops
+coexist fine, but transformers' TF path does not). Fix is **environment-only, no
+code change**: `export USE_TF=0` forces transformers to stay torch-only. Our audio
+wrapper imports TensorFlow directly for YAMNet and is unaffected. (`KMP_DUPLICATE_LIB_OK`,
+`OMP_NUM_THREADS`, `MKL_THREADING_LAYER` did **not** help — only `USE_TF=0` did.)
+
+**One-pass command (all real backends + Ollama judge):**
+
+```bash
+export PATH="$HOME/ollama/bin:$PATH"; ollama serve &   # keep alive
+cd <repo>
+USE_TF=0 TRIGUARD_TEXT_BACKEND=hf TRIGUARD_IMAGE_BACKEND=blip \
+TRIGUARD_AUDIO_BACKEND=real OLLAMA_TIMEOUT=300 PYTHONPATH=src \
+  ~/.venv-tri/bin/python -m triguard.cli --judge ollama run \
+    data/sample_inputs/sample_multimodal_real.json
+```
+
+Note: the judge is selected with `--judge ollama` (the CLI passes `rule`
+explicitly, so `TRIGUARD_JUDGE` env alone would not switch it).
+
+**All-real integration run** — this is an integration demonstration on **benign
+synthetic media plus a real toxic-text signal**, NOT harmful-content detection.
+Input `data/sample_inputs/sample_multimodal_real.json` = a real toxic sentence +
+the committed synthetic `blip_test.png` + the committed espeak `audio_test.wav`
+(no harmful media is committed). Captured to `outputs/demo_full_real.json`:
+
+| modality | mode | real output |
+|---|---|---|
+| text | `real-hf` | toxicity 0.9751; labels insult, threat, toxic (`unitary/toxic-bert`) |
+| image | `real-blip` | caption "a house in the middle of a field"; no risk cues |
+| audio | `real-audio` | Whisper-tiny "The quick brown fox jump so that they do not near the river bank."; YAMNet `[(Speech, 0.8602)]` |
+| judge | `ollama` (llama3) | risk_score 0.98, `harmful`, action `block`, flagged `[text]` |
+
+llama3 rationale (verbatim): "The text evidence is flagged as 'toxic' with a
+confidence of 0.95 and contains labels such as 'insult', 'threat', which indicates
+a high risk of harm. Although the image and audio evidence do not indicate any
+harmful content, the overall toxicity score suggests that this content should be
+flagged." The judge correctly attributed the risk to the text only and read the
+image/audio as benign — an honest, grounded verdict. The result is a schema-valid
+`TriGuardResult` (constructed through pydantic; `JudgeOutput` fields validated).
+
+**RAM/latency:** peak resident 2.98 GB (`/usr/bin/time -v`, all four models in one
+Python process) + llama3 5.3 GB VRAM (100% GPU, `ollama ps`); end-to-end
+`latency_ms` 49421 on a cold first pass.
+
+**Graceful-fallback evidence** (`outputs/demo_harmful_fallback.json`): the same
+real-backend command on `sample_harmful.json` — whose `image`/`audio` point at
+placeholder paths that do not exist — keeps text `real-hf` but degrades image and
+audio to `mode: "mock"` (missing files), and llama3 returns `borderline`/`review`.
+This shows the per-component fallback working end-to-end in the combined process.
+
+**Known caveat (unchanged):** `TriGuardResult.model_versions` is still hardcoded in
+the orchestrator (reports `sklearn-tfidf-lr-v1` / `mock-v1` even on this all-real
+run). Verify which backend actually ran via each evidence object's `raw["mode"]`,
+not `model_versions`. Fixing that touches the pipeline and is left as a separate,
+documented follow-up.
+
+**Fast suite in `~/.venv-tri`:** `PYTHONPATH=src ~/.venv-tri/bin/python -m pytest
+-q` -> 23 passed, 6 skipped (offline defaults intact; `TRIGUARD_MOCK=1` still works).

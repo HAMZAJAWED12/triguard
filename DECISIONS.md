@@ -256,3 +256,40 @@ this sample (borderline vs harmful) and OMITTED the audio modality from its flag
 action rule). Fallback proven twice: cold-load client timeout ->
 `ollama_unavailable:TimeoutError`; server stopped -> `ollama_unavailable:[Errno
 111] Connection refused`; both degraded to the rule judge without crashing.
+
+## Decision 016: Combined single-process tri-modal venv (~/.venv-tri) + USE_TF=0 guard
+Date: 2026-06-25
+Status: accepted
+
+Context: The real backends worked only in separate venvs (py3.14 text+image;
+py3.12 audio); no single process ran text + image + audio + the Ollama judge
+together. Sprint 5: one reproducible py3.12 CPU environment proving an all-real
+orchestrator pass. Infrastructure only — avoid code/schema/wrapper changes.
+Decision: Build `~/.venv-tri` (py3.12, in $HOME off OneDrive) with CPU-only wheels
+(torch installed first from the PyTorch CPU index), pinned in `requirements-full.txt`.
+Resolve the framework tension with `numpy<2` (resolved 1.26.4; sklearn + torch);
+TensorFlow 2.21 + protobuf 7.35.1 coexist with no conflict. A real SIGSEGV
+appeared: with torch AND tensorflow installed, `transformers` eagerly imports TF
+and the process segfaults when a torch pipeline runs (crash isolated to the
+toxic-bert step, before our audio code imports TF; plain torch+TF ops coexist
+fine). Fix is ENVIRONMENT-ONLY: `USE_TF=0` forces transformers torch-only; the
+audio wrapper's direct TensorFlow/YAMNet use is unaffected. No code change
+(`KMP_DUPLICATE_LIB_OK` / `OMP_NUM_THREADS` / `MKL_THREADING_LAYER` did not help).
+Reason: keeps schema + wrappers + Windows `.venv` untouched; the crash is a
+packaging interaction, best fixed by an env flag documented for the combined venv.
+Impact: new `scripts/build_venv_tri.sh`, `requirements-full.txt` (95 exact pins,
+py3.12.13), `data/sample_inputs/sample_multimodal_real.json` (real committed
+media), `docs/implementation_notes.md` Sprint-5 section; captured
+`outputs/demo_full_real.json` (all-real) + `outputs/demo_harmful_fallback.json`
+(graceful mock fallback). Fast suite in `~/.venv-tri`: 23 passed, 6 skipped
+(offline defaults intact).
+Result (one process, all real; `sample_multimodal_real.json` = real toxic text +
+benign synthetic image/audio — an integration demo, NOT harmful-content
+detection): text `real-hf` toxicity 0.9751 (insult/threat/toxic); image
+`real-blip` "a house in the middle of a field"; audio `real-audio` Whisper-tiny
+"The quick brown fox jump so that they do not near the river bank." + YAMNet
+[(Speech, 0.8602)]; llama3 judge risk_score 0.98, `harmful`, `block`, flagged
+`[text]`, grounded rationale reading image/audio as benign. Schema-valid
+`TriGuardResult`. Peak RSS 2.98 GB + llama3 5.3 GB VRAM; `latency_ms` 49421 cold.
+Caveat: `model_versions` still hardcoded (verify via `evidence.raw["mode"]`);
+pipeline fix deferred.

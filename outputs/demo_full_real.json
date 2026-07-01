@@ -1,0 +1,68 @@
+{
+  "risk_score": 0.98,
+  "risk_label": "harmful",
+  "flagged_modalities": [
+    "text"
+  ],
+  "rationale": "The text evidence is flagged as 'toxic' with a confidence of 0.95 and contains labels such as 'insult', 'threat', which indicates a high risk of harm. Although the image and audio evidence do not indicate any harmful content, the overall toxicity score suggests that this content should be flagged.",
+  "uncertainties": [
+    "The confidence in the text's toxicity is high, but it's unclear whether the other modalities would have changed the outcome if they were more confident."
+  ],
+  "recommended_action": "block",
+  "text_evidence": {
+    "toxicity_score": 0.9751,
+    "top_labels": [
+      "insult",
+      "threat",
+      "toxic"
+    ],
+    "confidence": 0.9502,
+    "raw": {
+      "mode": "real-hf",
+      "model_name": "unitary/toxic-bert",
+      "model_revision": "4d6c22e74ba2fdd26bc4f7238f50766b045a0d94",
+      "scores": {
+        "toxic": 0.9751,
+        "threat": 0.8277,
+        "insult": 0.5455,
+        "obscene": 0.2437,
+        "severe_toxic": 0.1733,
+        "identity_hate": 0.0488
+      }
+    }
+  },
+  "image_evidence": {
+    "caption": "a house in the middle of a field",
+    "visual_risk_cues": [],
+    "confidence": 0.5353,
+    "raw": {
+      "mode": "real-blip",
+      "model_name": "Salesforce/blip-image-captioning-base",
+      "model_revision": "82a37760796d32b1411fe092ab5d4e227313294b",
+      "caption": "a house in the middle of a field"
+    }
+  },
+  "audio_evidence": {
+    "transcript": "The quick brown fox jump so that they do not near the river bank.",
+    "transcript_confidence": 0.5227,
+    "yamnet_tags": [
+      [
+        "Speech",
+        0.8602
+      ]
+    ],
+    "raw": {
+      "mode": "real-audio",
+      "whisper_model": "tiny",
+      "yamnet": "yamnet/1"
+    }
+  },
+  "latency_ms": 49421,
+  "model_versions": {
+    "orchestrator": "0.1.0-tier-a",
+    "text_model": "sklearn-tfidf-lr-v1",
+    "image_model": "mock-v1",
+    "audio_model": "mock-v1",
+    "llm_judge": "ollama"
+  }
+}

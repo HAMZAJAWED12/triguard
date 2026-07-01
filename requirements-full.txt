@@ -1,0 +1,112 @@
+# TriGuard — full single-process stack (Sprint 5): text + image + audio + the
+# Ollama judge running in ONE Python 3.12 CPU environment (~/.venv-tri), built in
+# $HOME (off OneDrive). See scripts/build_venv_tri.sh and docs/implementation_notes.md.
+#
+# Python: 3.12.13. Exact pins captured with `uv pip freeze` from a verified run
+# (all backends real, one orchestrator pass, JudgeOutput schema-valid).
+#
+# torch here is the CPU build (`+cpu` local version) — install needs the PyTorch
+# CPU index below, and torch must be installed FIRST so nothing pulls the CUDA stack.
+#
+# RUNTIME REQUIREMENT: export USE_TF=0
+#   With both torch and TensorFlow present, transformers eagerly imports TF and the
+#   process SIGSEGVs when a torch pipeline runs. USE_TF=0 forces transformers to stay
+#   torch-only. The audio wrapper imports TensorFlow directly for YAMNet and is
+#   unaffected. numpy<2 is kept for sklearn/torch compatibility.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+absl-py==2.4.0
+aiohappyeyeballs==2.7.1
+aiohttp==3.14.1
+aiosignal==1.4.0
+annotated-types==0.7.0
+astunparse==1.6.3
+attrs==26.1.0
+audioread==3.1.0
+certifi==2026.6.17
+cffi==2.0.0
+charset-normalizer==3.4.7
+datasets==3.6.0
+decorator==5.3.1
+dill==0.3.8
+filelock==3.29.0
+flatbuffers==25.12.19
+frozenlist==1.8.0
+fsspec==2025.3.0
+gast==0.7.0
+google-pasta==0.2.0
+grpcio==1.81.1
+h5py==3.14.0
+hf-xet==1.5.1
+huggingface-hub==0.36.2
+idna==3.18
+iniconfig==2.3.0
+jinja2==3.1.6
+joblib==1.5.3
+keras==3.15.0
+lazy-loader==0.5
+libclang==18.1.1
+librosa==0.11.0
+llvmlite==0.47.0
+markdown-it-py==4.2.0
+markupsafe==3.0.3
+mdurl==0.1.2
+ml-dtypes==0.5.4
+more-itertools==11.1.0
+mpmath==1.3.0
+msgpack==1.2.1
+multidict==6.7.1
+multiprocess==0.70.16
+namex==0.1.0
+networkx==3.6.1
+numba==0.65.1
+numpy==1.26.4
+openai-whisper==20250625
+opt-einsum==3.4.0
+optree==0.19.1
+packaging==26.2
+pandas==3.0.3
+pillow==11.3.0
+platformdirs==4.10.0
+pluggy==1.6.0
+pooch==1.9.0
+propcache==0.5.2
+protobuf==7.35.1
+pyarrow==24.0.0
+pycparser==3.0
+pydantic==2.13.4
+pydantic-core==2.46.4
+pygments==2.20.0
+pytest==9.1.1
+python-dateutil==2.9.0.post0
+pyyaml==6.0.3
+regex==2026.6.28
+requests==2.34.2
+rich==15.0.0
+safetensors==0.8.0
+scikit-learn==1.5.2
+scipy==1.17.1
+setuptools==70.2.0
+six==1.17.0
+soundfile==0.14.0
+soxr==1.1.0
+sympy==1.14.0
+tensorflow==2.21.0
+tensorflow-cpu==2.21.0
+tensorflow-hub==0.16.1
+termcolor==3.3.0
+tf-keras==2.21.0
+threadpoolctl==3.6.0
+tiktoken==0.13.0
+tokenizers==0.22.2
+torch==2.12.1+cpu
+tqdm==4.68.3
+transformers==4.57.6
+triton==3.7.1
+typing-extensions==4.15.0
+typing-inspection==0.4.2
+urllib3==2.7.0
+wheel==0.47.0
+wrapt==2.2.2
+xxhash==3.8.0
+yarl==1.24.2
