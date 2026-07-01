@@ -30,3 +30,6 @@ data/t2_samples/
 
 # Note: outputs/ is intentionally NOT ignored — saved evaluation JSON
 # envelopes under outputs/evaluation/ are the evidence linked from the report.
+
+study/
+triguard-backup.bundle

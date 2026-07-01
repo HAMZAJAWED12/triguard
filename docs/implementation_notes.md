@@ -146,3 +146,62 @@ bash scripts/run_wsl_sprint3.sh   # uv -> py3.12 ~/.venv-triguard-audio, install
   0.523, `yamnet_tags` `[('Speech', 0.8602)]`, `mode` `real-audio`.
 
 Real-data audio evaluation (T4, AudioSet subset) is a separate later sprint.
+
+### Sprint 4 — real LLM judge (Ollama)
+
+The judge's Ollama path (`src/triguard/models/llm_judge.py`) now runs against a
+real local instruction model. The rule-based judge remains the offline default;
+the Ollama path is opt-in via `TRIGUARD_JUDGE=ollama`.
+
+| Setting | Env var | Default |
+|---|---|---|
+| Judge path | `TRIGUARD_JUDGE` | `rule` |
+| Model tag | `TRIGUARD_OLLAMA_MODEL` (falls back to `OLLAMA_MODEL`) | `llama3:8b-instruct-q4_K_M` |
+| Endpoint | `OLLAMA_HOST` | `http://localhost:11434` |
+| Client timeout (s) | `OLLAMA_TIMEOUT` | `60` |
+
+Host, model and timeout are read per call (not at import) so environment
+overrides always take effect. Fallback is graceful and distinguishable: invalid
+JSON after one stricter-prompt retry -> rule judge + uncertainty
+`judge_output_invalid`; unreachable/timeout -> rule judge + uncertainty
+`ollama_unavailable:<reason>`. No new dependency — HTTP uses stdlib `urllib`.
+
+**Model:** `llama3:8b-instruct-q4_K_M` (Llama-3-8B-Instruct, 4-bit K-quant
+q4_K_M). **Observed:** 5.3 GB resident, 100% GPU (WSL CUDA passthrough); cold
+load exceeded the 60 s default timeout, so first-call latency needs
+`OLLAMA_TIMEOUT` raised or a warm-up (the smoke warms the model first).
+
+**Install (WSL, no sudo):** Ollama v0.31.1 `ollama-linux-amd64.tar.zst` unpacked
+to `$HOME/ollama`, decompressed with Python 3.14's stdlib `compression.zstd`
+(no system zstd needed); `ollama serve` run as a user process; model cached in
+`$HOME/.ollama/models`.
+
+**Reproduce (WSL):**
+
+```bash
+export PATH="$HOME/ollama/bin:$PATH"
+ollama serve &                      # keep alive
+ollama pull llama3:8b-instruct-q4_K_M
+cd <repo> && source .venv-linux/bin/activate
+OLLAMA_TIMEOUT=300 PYTHONPATH=src python scripts/smoke_ollama.py data/sample_inputs/sample_harmful.json
+PYTHONPATH=src python -m pytest -q --run-slow tests/test_llm_judge_ollama.py
+```
+
+**Real run** (sample `sample_harmful.json`; evidence: text toxicity 0.7167
+[insult, threat], image cue weapon, audio shouting 0.7):
+
+| judge | risk_label | action | flagged | risk_score |
+|---|---|---|---|---|
+| rule | harmful | block | text, image, audio | — |
+| llama3 | borderline | review | text, image | 0.73 |
+
+llama3 rationale (verbatim): "The text evidence suggests a high level of toxicity
+with an insult and threat detected, while the image caption and visual risk cues
+indicate potential harm. However, the confidence levels are not extremely high,
+leading to a borderline classification." Grounding check: grounded (cites insult,
+threat, toxicity, image); no invented modalities or numbers; re-validated against
+`JudgeOutput`. Honest notes: llama3 was more conservative than the rule judge and
+omitted the audio modality from its flags; its risk_score 0.73 is high for a
+`borderline` label (still schema-valid). Fallback verified: cold-load timeout ->
+`ollama_unavailable:TimeoutError`; server stopped -> `ollama_unavailable:[Errno
+111] Connection refused`; both degraded to the rule judge without crashing.

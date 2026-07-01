@@ -27,8 +27,22 @@ from ..orchestrator.schemas import (
     Modality,
 )
 
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3:8b-instruct-q4_K_M")
+_DEFAULT_OLLAMA_HOST = "http://localhost:11434"
+_DEFAULT_OLLAMA_MODEL = "llama3:8b-instruct-q4_K_M"
+
+
+def _ollama_host() -> str:
+    """Read the Ollama endpoint per call (not at import) so tests/env can override."""
+    return os.getenv("OLLAMA_HOST", _DEFAULT_OLLAMA_HOST)
+
+
+def _ollama_model() -> str:
+    """Model tag, per call. TRIGUARD_OLLAMA_MODEL wins; OLLAMA_MODEL kept for compat."""
+    return (
+        os.getenv("TRIGUARD_OLLAMA_MODEL")
+        or os.getenv("OLLAMA_MODEL")
+        or _DEFAULT_OLLAMA_MODEL
+    )
 
 # Prompt used in production (Ollama path).
 JUDGE_PROMPT_TEMPLATE = """You are a content-moderation judge. Read the evidence below
@@ -75,11 +89,20 @@ def judge(input_: JudgeInput, *, force_mode: Optional[str] = None) -> JudgeOutpu
     if mode == "ollama":
         try:
             return _judge_via_ollama(input_)
-        except (urllib.error.URLError, JudgeFailure) as e:
-            # graceful fallback
+        except JudgeFailure:
+            # LLM reachable but returned invalid JSON twice -> rule fallback.
+            return _rule_based_judge(
+                input_, extra_uncertainties=["judge_output_invalid"]
+            )
+        except urllib.error.URLError as e:
+            # Ollama not reachable -> silent rule fallback, reason recorded.
+            return _rule_based_judge(
+                input_, extra_uncertainties=[f"ollama_unavailable:{e.reason}"]
+            )
+        except Exception as e:  # timeout / unexpected -> never crash the pipeline
             return _rule_based_judge(
                 input_,
-                extra_uncertainties=[f"ollama_unavailable: {type(e).__name__}"],
+                extra_uncertainties=[f"ollama_unavailable:{type(e).__name__}"],
             )
     return _rule_based_judge(input_)
 
@@ -198,27 +221,28 @@ def _judge_via_ollama(input_: JudgeInput) -> JudgeOutput:
     raw = _ollama_generate(prompt)
     try:
         return _parse_judge_output(raw)
-    except ValidationError:
+    except (ValidationError, json.JSONDecodeError):
         stricter = prompt + "\n\nIMPORTANT: respond with ONLY the JSON object. " \
                             "Do not add commentary, markdown or code fences."
         raw2 = _ollama_generate(stricter)
         try:
             return _parse_judge_output(raw2)
-        except ValidationError as e:
+        except (ValidationError, json.JSONDecodeError) as e:
             raise JudgeFailure(str(e)) from e
 
 
 def _ollama_generate(prompt: str) -> str:
     body = json.dumps(
-        {"model": OLLAMA_MODEL, "prompt": prompt, "stream": False,
+        {"model": _ollama_model(), "prompt": prompt, "stream": False,
          "options": {"temperature": 0.0}}
     ).encode("utf-8")
     req = urllib.request.Request(
-        f"{OLLAMA_HOST}/api/generate",
+        f"{_ollama_host()}/api/generate",
         data=body,
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=60) as resp:
+    timeout = float(os.getenv("OLLAMA_TIMEOUT", "60"))
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
         data = json.loads(resp.read().decode("utf-8"))
     return data.get("response", "")
 

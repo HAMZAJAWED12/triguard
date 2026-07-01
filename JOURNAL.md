@@ -197,3 +197,44 @@
 ### Next steps
 - All three perception models now have real tiers. Optional: T3/T4 real-data
   evaluation; HF/CPU repins; FastAPI demo (Prompt 5).
+
+---
+
+## Week 10 — Real LLM judge (Ollama)
+### Planned work
+- Exercise + harden the existing Ollama judge path against a real local LLM,
+  prove the graceful fallback, and capture a real, evidence-grounded rationale.
+
+### Completed work
+- `llm_judge.py`: read host/model/timeout per call (`TRIGUARD_OLLAMA_MODEL`,
+  `OLLAMA_HOST`, `OLLAMA_TIMEOUT`); split fallback tags (`judge_output_invalid`
+  vs `ollama_unavailable:<reason>`); catch `json.JSONDecodeError` in the
+  retry/fallback path. Default judge stays rule + offline; public schema untouched.
+- `scripts/smoke_ollama.py`: judges the same evidence via rule and Ollama, runs a
+  grounding/hallucination check on the LLM rationale, and re-validates against
+  `JudgeOutput`.
+- `tests/test_llm_judge_ollama.py`: one `slow` test; skips cleanly when Ollama is
+  unreachable. No CI dependency on Ollama.
+- Stood up Ollama user-local in WSL (no sudo; v0.31.1 tar.zst decompressed via
+  Python 3.14 stdlib `compression.zstd`); pulled `llama3:8b-instruct-q4_K_M`;
+  ran on GPU (WSL passthrough).
+
+### Problems encountered
+- No passwordless sudo -> installed Ollama from the release tarball into $HOME.
+- WSL had no zstd binary and `tar` lacked zstd support -> decompressed with
+  Python 3.14's `compression.zstd`.
+- Flaky link reset the 1.4 GB bundle download -> resumable retry loop.
+- First (cold) inference exceeded the 60 s client timeout and fell back -> added
+  `OLLAMA_TIMEOUT`; warmed the model before the timed smoke.
+
+### Decisions made
+- D-015: Ollama path exercised + hardened; rule stays default; no new dependency.
+
+### Tests/evidence produced
+- Fast suite 23 passed, 6 skipped (offline). Slow ollama test 1 passed with the
+  server up. Real rule-vs-llama3 comparison + grounding + fallback captured (see
+  D-015 and docs/implementation_notes.md).
+
+### Next steps
+- Optional: combined py3.12 tri-modal venv; T3/T4 real-data eval; FastAPI demo;
+  Preliminary Report assembly.

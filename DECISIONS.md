@@ -200,3 +200,59 @@ Impact: real tier in `audio_model.py`; new `[audio]` optional extra
 `tests/test_audio_model_real.py` (skips until a committed public-domain WAV is
 added at `data/sample_inputs/audio_test.wav`). Fast suite stays 23 passed
 (+ slow audio test skipped). No T4 eval yet (separate sprint).
+
+## Decision 015: LLM judge — real Ollama path exercised + hardened
+Date: 2026-06-25
+Status: accepted
+
+Context: The Ollama judge path existed but had never been run against a real
+local LLM, and both failure modes (server unreachable; invalid JSON) were tagged
+identically. Sprint 4: stand up a real model, harden the path, prove the fallback,
+capture a real evidence-grounded rationale — without changing the default (rule)
+judge, the public schema, or the offline fast suite.
+Options considered: (a) rebuild the judge; (b) wire + harden the existing Ollama
+path behind flags. Chose (b).
+Decision: Rule judge stays the offline default. Ollama path is opt-in
+(`TRIGUARD_JUDGE=ollama`); model via `TRIGUARD_OLLAMA_MODEL` (default
+`llama3:8b-instruct-q4_K_M`, `OLLAMA_MODEL` kept as compat), endpoint via
+`OLLAMA_HOST`, client timeout via `OLLAMA_TIMEOUT` (default 60 s). Host/model/
+timeout are read at call time (not import) so env/tests override reliably.
+Fallback tags differentiated: invalid JSON after one stricter-prompt retry ->
+`judge_output_invalid`; unreachable/timeout -> `ollama_unavailable:<reason>`.
+JSON parsing widened to catch `json.JSONDecodeError` (not only `ValidationError`)
+so malformed output routes through retry -> fallback. Manual smoke
+(`scripts/smoke_ollama.py`) judges the same evidence with both paths, checks the
+LLM rationale is grounded in the JudgeInput (cites real scores/labels/cues/tags,
+no invented modalities/numbers), and re-validates against `JudgeOutput`. One
+`slow` test skips cleanly when Ollama is unreachable. No new dependency (stdlib
+`urllib`).
+Reason: the fast suite must stay offline + deterministic; both failure modes must
+degrade gracefully and be distinguishable; the LLM output must be provably
+schema-valid and evidence-grounded, not trusted blindly.
+Env: real model run under WSL. Ollama installed user-local (no sudo) from the
+v0.31.1 `ollama-linux-amd64.tar.zst` bundle, decompressed with Python 3.14 stdlib
+`compression.zstd` (no system zstd); ran on GPU via WSL passthrough.
+Impact: `llm_judge.py` call-time env + split fallback tags + JSON hardening +
+`OLLAMA_TIMEOUT`; new `scripts/smoke_ollama.py`; new slow test
+`tests/test_llm_judge_ollama.py`. Fast suite 23 passed, 6 skipped (was 5; +1 new
+slow test). `test_ollama_unavailable_falls_back_to_rule` stays green and is now
+robust to a real server on the default port.
+Result (real run, WSL, `llama3:8b-instruct-q4_K_M` quant q4_K_M, 5.3 GB VRAM,
+100% GPU; sample `data/sample_inputs/sample_harmful.json`; evidence: text
+toxicity 0.7167 [insult, threat], image cue weapon, audio shouting 0.7):
+- rule judge -> risk_label `harmful`, action `block`, flagged text+image+audio.
+- llama3 judge -> risk_label `borderline`, action `review`, risk_score 0.73,
+  flagged text+image; rationale (verbatim): "The text evidence suggests a high
+  level of toxicity with an insult and threat detected, while the image caption
+  and visual risk cues indicate potential harm. However, the confidence levels
+  are not extremely high, leading to a borderline classification."; uncertainties
+  ["confidence in text toxicity detection", "reliability of image caption"].
+- Grounding: grounded (cites insult, threat, toxicity, image); no invented
+  modalities/numbers; schema re-validation passed.
+Honest observations: the LLM judge is more conservative than the rule judge on
+this sample (borderline vs harmful) and OMITTED the audio modality from its flags
+(did not weigh the shouting tag); its risk_score 0.73 is high relative to its own
+`borderline` label (schema-valid, since borderline+review satisfies the label/
+action rule). Fallback proven twice: cold-load client timeout ->
+`ollama_unavailable:TimeoutError`; server stopped -> `ollama_unavailable:[Errno
+111] Connection refused`; both degraded to the rule judge without crashing.
