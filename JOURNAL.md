@@ -303,3 +303,38 @@
 
 ### Next steps
 - Optional: T3 image-text eval; fix `model_versions` pipeline hardcode; FastAPI demo.
+
+---
+
+## Week 13 — Image-text evaluation (track T3)
+### Planned work
+- Measure the image track on a public labelled image-text set: pipeline
+  flag-vs-label. Honest numbers, no perception-code change.
+
+### Completed work
+- Repo relocated off OneDrive to `C:\dev\triguard` (`/mnt/c/dev/triguard`); the 4
+  `scripts/*.sh` `cd` paths repointed.
+- Verified dataset options first: Hateful Memes gated; MMHS150K mirror = 6.5 GB
+  zip (unstreamable) + licence unclear -> rejected. Chose `Ahren09/MMSoc_Memotion`
+  (Memotion; ungated, embedded images, `offensive` label + OCR text).
+- `src/triguard/data/image_datasets.py` (stream + persist images to gitignored
+  `data/t3_samples/`, never committed); `src/triguard/evaluation/run_t3.py`
+  (flag-vs-label P/R/F1 + confusion + AUROC + text-only baseline);
+  `tests/test_run_t3.py` (one slow loader test, clean-skip offline).
+
+### Problems encountered
+- No clean CC-licensed streamable image-text hate benchmark exists (meme/tweet
+  images are third-party copyright); used Memotion with media streamed + never
+  committed, documented as a limitation.
+
+### Decisions made
+- D-018: Memotion flag-vs-label; captioner-not-classifier framing; media never committed.
+
+### Tests/evidence produced
+- Run 20260704-172017 (`~/.venv-tri`, seed 42, n=50, real-hf + real-blip, rule
+  judge): pipeline P 0.6923 / R 0.2812 / F1 0.40 / acc 0.46 / AUROC 0.566;
+  text-only baseline F1 0.3636. Fast suite 23 passed / 8 skipped.
+
+### Next steps
+- Optional: fix `model_versions` pipeline hardcode; FastAPI demo; Preliminary
+  Report update.

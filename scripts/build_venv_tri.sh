@@ -7,7 +7,7 @@
 #
 # Windows .venv and its offline defaults are untouched. CPU wheels only (no CUDA).
 set -euo pipefail
-cd "/mnt/c/Users/jawed/OneDrive/ICAEWSOFTWARE/FYP UOL/triguard"
+cd "/mnt/c/dev/triguard"
 
 VENV="$HOME/.venv-tri"
 

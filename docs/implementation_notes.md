@@ -332,3 +332,50 @@ Honest reading: whisper-tiny on clean read speech ~9.7% WER — a best case, not
 noisy/adversarial moderation audio. YAMNet top-5 0.66 under an approximate map; the
 top-1/top-5 gap largely reflects map coarseness + AudioSet's finer ontology, not
 only model error. Fast suite: 23 passed, 7 skipped (offline defaults intact).
+
+### Evaluation track T3 — image-text moderation (flag-vs-label)
+
+Measures the image track on public labelled memes. Hateful Memes is gated;
+MMHS150K's mirror keeps images in a 6.5 GB zip (unstreamable, licence unclear).
+Used `Ahren09/MMSoc_Memotion` — Memotion (SemEval-2020 Task 8), ungated, images
+embedded as a HF `Image` feature (streams per-row), with `offensive` label +
+dataset OCR text.
+
+| item | value |
+|---|---|
+| dataset | `Ahren09/MMSoc_Memotion` (Memotion, SemEval-2020) |
+| licence | research use; meme images third-party copyright -> streamed, never committed |
+| label | binary: `not_offensive` -> 0, else -> 1 |
+| decision rule | predicted-positive = `risk_label in {borderline, harmful}` |
+| backends | text `real-hf` (toxic-bert on OCR text) + image `real-blip` + rule judge |
+
+Loader `src/triguard/data/image_datasets.py` streams (seed + cap), persists images
+to gitignored `data/t3_samples/img/` + a manifest; media is never committed. BLIP
+does not OCR meme text — the text signal comes from the dataset's OCR field, so T3
+is a flag-vs-label decision measure, NOT a trained-classifier F1.
+
+Reproduce (WSL, `~/.venv-tri`, `USE_TF=0`):
+
+```bash
+TRIGUARD_TEXT_BACKEND=hf TRIGUARD_IMAGE_BACKEND=blip USE_TF=0 PYTHONPATH=src \
+  ~/.venv-tri/bin/python -m triguard.evaluation.run_t3 --sample-size 50 --seed 42
+```
+
+Result (run `20260704-172017`, py3.12, seed 42, n=50; real-hf + real-blip; class
+balance 18 not_offensive / 32 offensive):
+
+| metric | pipeline (image+text) | text-only baseline |
+|---|---|---|
+| precision | 0.6923 | 0.6667 |
+| recall | 0.2812 | 0.25 |
+| F1 | 0.40 | 0.3636 |
+| accuracy | 0.46 | 0.44 |
+| AUROC | 0.566 | — |
+
+Honest reading: the pipeline barely beats text-only (F1 0.40 vs 0.36) — the image
+track adds ~0.04 F1; BLIP captions are often degenerate on memes and fire few risk
+cues. Low recall (0.28) + near-chance AUROC (0.566): most memes are offensive via
+wording/context that toxic-bert flags only when overtly toxic. Modest by design,
+documented. Fast suite: 23 passed, 8 skipped. (Note: in the combined venv a
+`pytest --run-slow` process can SIGSEGV at interpreter teardown — a torch atexit
+artifact; the test assertions pass first, and the default fast lane is unaffected.)

@@ -29,6 +29,8 @@ data/hf_cache/
 data/t2_samples/
 # evaluation track T4 (audio): persisted LibriSpeech / ESC-50 clips + manifests
 data/t4_samples/
+# evaluation track T3 (image-text): persisted Memotion images + manifest (never commit media)
+data/t3_samples/
 
 # Note: outputs/ is intentionally NOT ignored — saved evaluation JSON
 # envelopes under outputs/evaluation/ are the evidence linked from the report.

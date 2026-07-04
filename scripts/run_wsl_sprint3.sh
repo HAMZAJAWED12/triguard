@@ -5,7 +5,7 @@
 # The venv lives in $HOME (NOT on /mnt/c OneDrive) to avoid multi-GB sync + slow
 # Windows-FS I/O. ffmpeg (already apt-installed) is required by Whisper.
 set -euo pipefail
-cd "/mnt/c/Users/jawed/OneDrive/ICAEWSOFTWARE/FYP UOL/triguard"
+cd "/mnt/c/dev/triguard"
 
 VENV="$HOME/.venv-triguard-audio"
 

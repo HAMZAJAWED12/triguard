@@ -330,3 +330,44 @@ Honest reading: whisper-tiny on clean read speech gives ~9.7% WER (a best case,
 not noisy/adversarial moderation audio); YAMNet top-5 0.66 under an approximate
 category map — the top-1/top-5 gap largely reflects map coarseness + AudioSet's
 finer ontology, not only model error.
+
+## Decision 018: Evaluation track T3 — image-text moderation (flag-vs-label) on public data
+Date: 2026-07-04
+Status: accepted
+
+Context: T3 (docs/evaluation_protocol.md) measures the image track. Hateful Memes
+is access-gated; MMHS150K's public mirror stores images in a 6.5 GB zip
+(unstreamable) with an unstated licence. Candidates were verified BEFORE any
+download and the gated/unstreamable ones rejected (STOP rule honoured).
+Decision: Use `Ahren09/MMSoc_Memotion` — the Memotion (SemEval-2020 Task 8) memes,
+ungated, images EMBEDDED as a HF `Image` feature (streams per-row, no zip), plus
+an `offensive` label + dataset-provided OCR text (`text_corrected`/`text_ocr`).
+Binarise `offensive`: not_offensive -> 0, else -> 1. Stream (seed 42, cap 50) and
+persist images to gitignored `data/t3_samples/` — meme images are third-party
+copyright, so media is NEVER committed; only `results.json` is.
+Metric = flag-vs-label: run the real pipeline (image BLIP + text toxic-bert on the
+OCR text + rule judge) per item; predicted-positive = `risk_label in {borderline,
+harmful}`. Report precision/recall/F1, confusion, accuracy, AUROC over
+`risk_score`, plus a text-only baseline. Rule judge (deterministic, offline) for
+reproducibility.
+Honest framing (also in limitations): BLIP is a captioner, not a hate classifier,
+and does not OCR meme text; the image track rarely fires. The text signal comes
+from the dataset's OCR field, not the pipeline's own OCR. This is a decision
+measure, NOT a trained-classifier F1 — expect modest numbers, most signal from text.
+New loader `src/triguard/data/image_datasets.py`; harness
+`src/triguard/evaluation/run_t3.py`; one slow loader test; `data/t3_samples/`
+gitignored. No perception-code/schema change.
+Impact: fast suite 23 passed, 8 skipped (was 7; +1 new slow test). Repo relocated
+off OneDrive to `C:\dev\triguard` (`/mnt/c/dev/triguard`); the 4 `scripts/*.sh`
+`cd` paths repointed.
+Result (run 20260704-172017, `~/.venv-tri` py3.12, USE_TF=0, seed 42, n=50,
+backends real-hf + real-blip, rule judge; class balance 18 not_offensive / 32
+offensive):
+ - Pipeline: precision 0.6923, recall 0.2812, F1 0.40, accuracy 0.46, AUROC 0.566.
+ - Text-only baseline: precision 0.6667, recall 0.25, F1 0.3636, accuracy 0.44.
+Honest reading: the pipeline barely beats the text-only baseline (F1 0.40 vs 0.36,
++0.04) — the image track (BLIP captions, often degenerate on memes) adds little,
+exactly as predicted for a captioner-not-classifier with no OCR. Low recall (0.28)
+and near-chance AUROC (0.566): most memes are offensive via wording/context that
+toxic-bert catches only when overtly toxic. This modest result is the real
+finding, documented not hidden.
