@@ -370,3 +370,34 @@
 
 ### Next steps
 - Optional: Preliminary Report update with the API demo + eval numbers.
+
+---
+
+## Week 15 — T6 tri-modal ablation harness (roadmap Phase A)
+### Planned work
+- Build the harness to demonstrate the thesis (multimodal vs unimodal); scaffold the
+  hand-built T6 set.
+
+### Completed work
+- `src/triguard/evaluation/run_t6.py` — 4-condition ablation (text/image/audio-only
+  vs multimodal), rule judge, per-condition metrics + `cross_modal_ablation` table.
+- `data/sample_inputs/triguard_eval_v1/` — manifest schema + README; an AI-DRAFTED
+  starter set of 18 non-confounder items (provenance recorded; to be reviewed/owned).
+- `tests/test_run_t6.py` — fast offline manifest-parse test.
+
+### Problems encountered
+- Genuine cross-modal confounders can't be auto-authored: only two benign committed
+  media assets, and the confounder design + labels are the student's own work.
+
+### Decisions made
+- D-022: T6 ablation harness; AI-drafted starter manifest kept separate from the
+  student's confounder-case design.
+
+### Tests/evidence produced
+- Fast suite 26 passed / 9 skipped (Windows). Real ablation
+  (`outputs/evaluation/20260704-221056/t6/`): multimodal 0.7778 acc / 0.6852 macro-F1
+  >= text-only 0.75 / 0.6746 > image/audio-only. cross_modal harmful items: 0.
+
+### Next steps
+- Student: author ~30–50 cross-modal confounder cases + media -> re-run T6 for the
+  headline multimodal-vs-unimodal recall delta. Then roadmap Phase B (OCR).

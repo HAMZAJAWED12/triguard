@@ -444,3 +444,33 @@ Impact: `pipeline.py` (+`import os`); new offline test
 `ollama->rule`). Fast suite 25 passed (was 24; +1), 9 skipped (Windows). Verified
 live: the API in real mode with `TRIGUARD_JUDGE=ollama` now reports
 `llm_judge: ollama` alongside the real llama3 rationale.
+
+## Decision 022: Evaluation track T6 — tri-modal ablation harness (roadmap Phase A)
+Date: 2026-07-04
+Status: accepted
+
+Context: The central thesis (multimodal orchestration catches cross-modal harm
+that unimodal tools miss, Kiela et al. 2020) was stated but never demonstrated.
+Phase A builds the harness that can prove it.
+Decision: Add `src/triguard/evaluation/run_t6.py` — runs a hand-built tri-modal set
+(`data/sample_inputs/triguard_eval_v1/manifest.json`) through the pipeline in FOUR
+conditions (text-only / image-only / audio-only / multimodal), rule judge,
+reporting per-condition 3-class P/R/F1 + confusion + accuracy, p50/p95 latency, and
+a `cross_modal_ablation` table (recall on `cross_modal:true` + `harmful` items per
+condition — the thesis metric). Reuses `pipeline.run` + the T2/T3 metric helpers.
+Fast offline manifest-parse test `tests/test_run_t6.py`.
+Manifest provenance (HONEST): the committed manifest is an **AI-DRAFTED STARTER SET**
+of 18 non-confounder items (recorded in its `provenance` field and in results.json
+`manifest_provenance`). It must be reviewed/owned and its AI assistance disclosed
+before use as report evidence. Genuine cross-modal **confounder** cases are NOT
+included — only two benign committed media assets exist, so no juxtaposition harm is
+constructible; those cases + media are the student's to design and label.
+Reason: build the measurement instrument now; the thesis-proving cases + labels are
+the student's intellectual contribution, kept separate for academic integrity.
+Impact: new `run_t6.py` + manifest + README + test. Fast suite 26 passed (was 25;
++1), 9 skipped (Windows). Ablation run (`~/.venv-tri`, real hf+blip+real-audio, rule
+judge, `outputs/evaluation/20260704-221056/t6/`): multimodal acc 0.7778 / macro-F1
+0.6852 >= text-only 0.75 / 0.6746 > image-only 0.60 / 0.25 > audio-only 0.50 /
+0.2222; `cross_modal harmful` items 0 (table empty until confounders added). On this
+non-confounder set the multimodal gain is small because harm is text-driven — an
+honest baseline; the cross-modal advantage awaits real confounder cases.
