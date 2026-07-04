@@ -27,6 +27,8 @@ env/
 # Keep hand-built data/sample_inputs/ tracked; ignore only downloads/caches.
 data/hf_cache/
 data/t2_samples/
+# evaluation track T4 (audio): persisted LibriSpeech / ESC-50 clips + manifests
+data/t4_samples/
 
 # Note: outputs/ is intentionally NOT ignored — saved evaluation JSON
 # envelopes under outputs/evaluation/ are the evidence linked from the report.
@@ -36,3 +38,7 @@ triguard-backup.bundle
 
 study/
 triguard-backup.bundle
+
+study/
+triguard-backup.bundle
+data/t4_samples/

@@ -273,3 +273,33 @@
 ### Next steps
 - Optional: fix `model_versions` reporting (pipeline); T3/T4 real-data eval;
   FastAPI demo; Preliminary Report assembly.
+
+---
+
+## Week 12 — Audio evaluation (track T4)
+### Planned work
+- Measure the real audio wrapper on public ground truth: Whisper WER + YAMNet
+  event accuracy. Honest numbers, no perception-code change.
+
+### Completed work
+- `src/triguard/data/audio_datasets.py` — LibriSpeech + ESC-50 streamed loaders
+  (seed + cap, persist wavs + manifest, gitignored `data/t4_samples/`).
+- `src/triguard/evaluation/run_t4.py` — WER (jiwer) + YAMNet top-1/top-5 vs an
+  approximate ESC-50 -> AudioSet map; writes `outputs/evaluation/<ts>/t4/results.json`.
+- `tests/test_run_t4.py` — one slow loader test (clean-skip offline).
+- `jiwer` pinned in `[eval]` + `requirements.txt`; `data/t4_samples/` gitignored.
+
+### Problems encountered
+- AudioSet (protocol T4) ships only YouTube ids -> substituted LibriSpeech (WER)
+  + ESC-50 (tagging) as public, ungated proxies; documented as a limitation.
+
+### Decisions made
+- D-017: T4 proxies + approximate YAMNet map; top-5 the fair headline.
+
+### Tests/evidence produced
+- Run `20260704-153729` (`~/.venv-tri`, seed 42, n=50 each, both `real-audio`):
+  Whisper WER corpus 0.0971 / mean-clip 0.1314 (tiny); YAMNet top-1 0.32 /
+  top-5 0.66 (ESC-50, 29 categories). Fast suite 23 passed / 7 skipped.
+
+### Next steps
+- Optional: T3 image-text eval; fix `model_versions` pipeline hardcode; FastAPI demo.

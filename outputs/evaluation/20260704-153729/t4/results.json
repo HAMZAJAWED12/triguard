@@ -1,0 +1,413 @@
+{
+  "track": "T4",
+  "run_at": "2026-07-04T15:37:29.160463+00:00",
+  "datasets": {
+    "librispeech": {
+      "hub_id": "openslr/librispeech_asr",
+      "config": "clean",
+      "split": "test",
+      "licence": "CC BY 4.0"
+    },
+    "esc50": {
+      "hub_id": "ashraq/esc50",
+      "config": null,
+      "split": "train",
+      "licence": "CC BY-NC 3.0 (Piczak 2015; non-commercial, academic use)"
+    }
+  },
+  "config": {
+    "sample_size": 50,
+    "seed": 42,
+    "run_env": "wsl-ubuntu-py312-tri"
+  },
+  "model_versions": {
+    "whisper_model": "tiny",
+    "yamnet": "yamnet/1"
+  },
+  "whisper_wer": {
+    "n": 50,
+    "wer_corpus": 0.0971,
+    "wer_mean_per_clip": 0.1314,
+    "wrapper_modes": [
+      "real-audio"
+    ]
+  },
+  "yamnet_events": {
+    "n": 50,
+    "top1_rate": 0.32,
+    "top5_rate": 0.66,
+    "categories_used": [
+      "car_horn",
+      "chainsaw",
+      "chirping_birds",
+      "church_bells",
+      "clock_alarm",
+      "clock_tick",
+      "coughing",
+      "cow",
+      "crackling_fire",
+      "crickets",
+      "dog",
+      "door_wood_creaks",
+      "door_wood_knock",
+      "engine",
+      "fireworks",
+      "frog",
+      "glass_breaking",
+      "hand_saw",
+      "helicopter",
+      "keyboard_typing",
+      "laughing",
+      "mouse_click",
+      "pig",
+      "rooster",
+      "siren",
+      "sneezing",
+      "snoring",
+      "train",
+      "water_drops"
+    ],
+    "wrapper_modes": [
+      "real-audio"
+    ]
+  },
+  "yamnet_label_map": {
+    "dog": [
+      "Dog",
+      "Bark",
+      "Bow-wow"
+    ],
+    "cat": [
+      "Cat",
+      "Meow"
+    ],
+    "rooster": [
+      "Crowing, cock-a-doodle-doo",
+      "Chicken, rooster",
+      "Fowl"
+    ],
+    "pig": [
+      "Pig",
+      "Oink"
+    ],
+    "cow": [
+      "Cattle, bovinae",
+      "Moo"
+    ],
+    "sheep": [
+      "Sheep",
+      "Bleat"
+    ],
+    "frog": [
+      "Frog",
+      "Croak"
+    ],
+    "crow": [
+      "Crow",
+      "Caw"
+    ],
+    "rain": [
+      "Rain",
+      "Raindrop",
+      "Rain on surface"
+    ],
+    "sea_waves": [
+      "Ocean",
+      "Waves, surf"
+    ],
+    "crackling_fire": [
+      "Fire",
+      "Crackle"
+    ],
+    "crickets": [
+      "Cricket",
+      "Insect"
+    ],
+    "chirping_birds": [
+      "Bird",
+      "Bird vocalization, bird call, bird song",
+      "Chirp, tweet"
+    ],
+    "water_drops": [
+      "Drip",
+      "Water"
+    ],
+    "wind": [
+      "Wind",
+      "Wind noise (microphone)"
+    ],
+    "thunderstorm": [
+      "Thunderstorm",
+      "Thunder"
+    ],
+    "crying_baby": [
+      "Baby cry, infant cry",
+      "Crying, sobbing"
+    ],
+    "sneezing": [
+      "Sneeze"
+    ],
+    "clapping": [
+      "Clapping",
+      "Hands"
+    ],
+    "breathing": [
+      "Breathing"
+    ],
+    "coughing": [
+      "Cough"
+    ],
+    "footsteps": [
+      "Walk, footsteps"
+    ],
+    "laughing": [
+      "Laughter"
+    ],
+    "snoring": [
+      "Snoring"
+    ],
+    "drinking_sipping": [
+      "Gulp, swallow",
+      "Slurp"
+    ],
+    "door_wood_knock": [
+      "Knock"
+    ],
+    "mouse_click": [
+      "Mouse",
+      "Click"
+    ],
+    "keyboard_typing": [
+      "Typing",
+      "Computer keyboard"
+    ],
+    "door_wood_creaks": [
+      "Creak"
+    ],
+    "clock_alarm": [
+      "Alarm",
+      "Alarm clock"
+    ],
+    "clock_tick": [
+      "Tick",
+      "Tick-tock",
+      "Clock"
+    ],
+    "glass_breaking": [
+      "Glass",
+      "Shatter"
+    ],
+    "helicopter": [
+      "Helicopter"
+    ],
+    "chainsaw": [
+      "Chainsaw"
+    ],
+    "siren": [
+      "Siren",
+      "Emergency vehicle"
+    ],
+    "car_horn": [
+      "Vehicle horn, car horn, honking",
+      "Honk"
+    ],
+    "engine": [
+      "Engine",
+      "Engine starting"
+    ],
+    "train": [
+      "Train",
+      "Rail transport"
+    ],
+    "church_bells": [
+      "Church bell",
+      "Bell"
+    ],
+    "airplane": [
+      "Aircraft",
+      "Fixed-wing aircraft, airplane"
+    ],
+    "fireworks": [
+      "Fireworks",
+      "Firecracker"
+    ],
+    "hand_saw": [
+      "Sawing"
+    ]
+  },
+  "failures": {
+    "asr_worst_wer": [
+      {
+        "reference": "MISTER OTTLEY'S INDEED",
+        "hypothesis": "Mr. Oatley's indeed.",
+        "wer": 0.6667,
+        "mode": "real-audio"
+      },
+      {
+        "reference": "AND YESTERDAY THINGS WENT ON JUST AS USUAL",
+        "hypothesis": "And yesterday, thanks for watching and I'm just as usual.",
+        "wer": 0.625,
+        "mode": "real-audio"
+      },
+      {
+        "reference": "BROTHER MAC ARDLE BROTHER KEOGH",
+        "hypothesis": "Brother Maccardle, Brother Kee-Off.",
+        "wer": 0.6,
+        "mode": "real-audio"
+      },
+      {
+        "reference": "THUS IDLENESS IS THE MOTHER",
+        "hypothesis": "Thus, I don't this is the mother.",
+        "wer": 0.6,
+        "mode": "real-audio"
+      },
+      {
+        "reference": "PAUL AN APOSTLE NOT OF MEN ET CETERA",
+        "hypothesis": "Paul and Apostle, not of men, etc.",
+        "wer": 0.375,
+        "mode": "real-audio"
+      },
+      {
+        "reference": "QUICK QUICK THEN AMONG THE HIGH REED GRASS SAID MONTALAIS STOOP ATHENAIS YOU ARE SO TALL",
+        "hypothesis": "Quick, quick, then, among the high-read grass said Montelet. Stoop, Athenae, you are so tall.",
+        "wer": 0.25,
+        "mode": "real-audio"
+      },
+      {
+        "reference": "NO CATHEDRAL NOT EVEN BURGOS ITSELF COULD VIE WITH THE CHURCH AT MONTMARTRE",
+        "hypothesis": "No cathedral, not even burgo, could vile with the church at Montmartre.",
+        "wer": 0.2308,
+        "mode": "real-audio"
+      },
+      {
+        "reference": "CHINGACHGOOK HAD CAUGHT THE LOOK AND MOTIONING WITH HIS HAND HE BADE HIM SPEAK",
+        "hypothesis": "Chinggachthuk had caught the look and motionning with his hand, he bait him speak.",
+        "wer": 0.2143,
+        "mode": "real-audio"
+      },
+      {
+        "reference": "SHE WAS THEREFORE MOST AGREEABLY SURPRISED TO HEAR MISTER CRESSWELL EXPRESS HIMSELF SO CORDIALLY AS APPROVING OF NEGRO EDUCATION",
+        "hypothesis": "She was therefore most agreeable, surprised to hear Mr. Cresswell express himself so cordially as a proving of Negro education.",
+        "wer": 0.2105,
+        "mode": "real-audio"
+      },
+      {
+        "reference": "DELIA CAME TO THE PARLOR AND WITH AN AIR OF GREAT MYSTERY BECKONED THE CHILDREN ASIDE AND SAID TO THEM IN A WHISPER LEAVE ANDELLA AND ROSALIE HERE AND DON'T SAY A WORD TO THEM",
+        "hypothesis": "Deleia came to the parlor and with an air of great mystery, back in the children's side and said to them, in a whisper, leave and Della and Rosalie here and don't say a word to them.",
+        "wer": 0.2,
+        "mode": "real-audio"
+      }
+    ],
+    "yamnet_mismatched": [
+      {
+        "category": "helicopter",
+        "expected_any_of": [
+          "Helicopter"
+        ],
+        "yamnet_top5": [
+          "Vehicle",
+          "Aircraft"
+        ]
+      },
+      {
+        "category": "sneezing",
+        "expected_any_of": [
+          "Sneeze"
+        ],
+        "yamnet_top5": [
+          "Silence"
+        ]
+      },
+      {
+        "category": "train",
+        "expected_any_of": [
+          "Train",
+          "Rail transport"
+        ],
+        "yamnet_top5": [
+          "Vehicle"
+        ]
+      },
+      {
+        "category": "car_horn",
+        "expected_any_of": [
+          "Vehicle horn, car horn, honking",
+          "Honk"
+        ],
+        "yamnet_top5": [
+          "Vehicle",
+          "Motor vehicle (road)",
+          "Truck"
+        ]
+      },
+      {
+        "category": "helicopter",
+        "expected_any_of": [
+          "Helicopter"
+        ],
+        "yamnet_top5": [
+          "Vehicle",
+          "Car",
+          "Motor vehicle (road)"
+        ]
+      },
+      {
+        "category": "chainsaw",
+        "expected_any_of": [
+          "Chainsaw"
+        ],
+        "yamnet_top5": [
+          "Vehicle",
+          "Accelerating, revving, vroom",
+          "Engine"
+        ]
+      },
+      {
+        "category": "laughing",
+        "expected_any_of": [
+          "Laughter"
+        ],
+        "yamnet_top5": [
+          "Silence"
+        ]
+      },
+      {
+        "category": "cow",
+        "expected_any_of": [
+          "Cattle, bovinae",
+          "Moo"
+        ],
+        "yamnet_top5": [
+          "Silence"
+        ]
+      },
+      {
+        "category": "laughing",
+        "expected_any_of": [
+          "Laughter"
+        ],
+        "yamnet_top5": [
+          "Speech"
+        ]
+      },
+      {
+        "category": "crackling_fire",
+        "expected_any_of": [
+          "Fire",
+          "Crackle"
+        ],
+        "yamnet_top5": [
+          "Bicycle"
+        ]
+      }
+    ]
+  },
+  "limitations": [
+    "small samples (<= 50 clips each); indicative, not a benchmark claim",
+    "evaluation-protocol T4 named an AudioSet subset; AudioSet ships only YouTube ids (no hosted audio), so LibriSpeech test-clean (WER) and ESC-50 (event tagging) are used as public, ungated proxies",
+    "ESC-50 -> AudioSet label map is APPROXIMATE and hand-built (see 'yamnet_label_map'); only mapped categories are sampled, so top-1 is a strict lower bound and top-5 is the fairer headline",
+    "ESC-50 is CC BY-NC 3.0 (Piczak 2015) — academic non-commercial use only",
+    "LibriSpeech is clean read speech; WER here is a best case, not representative of noisy/adversarial moderation audio",
+    "dataset revisions are not pinned; committed evidence is this results.json"
+  ]
+}

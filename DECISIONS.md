@@ -293,3 +293,40 @@ detection): text `real-hf` toxicity 0.9751 (insult/threat/toxic); image
 `TriGuardResult`. Peak RSS 2.98 GB + llama3 5.3 GB VRAM; `latency_ms` 49421 cold.
 Caveat: `model_versions` still hardcoded (verify via `evidence.raw["mode"]`);
 pipeline fix deferred.
+
+## Decision 017: Evaluation track T4 — real audio wrapper on public data
+Date: 2026-07-04
+Status: accepted
+
+Context: T4 (docs/evaluation_protocol.md) measures the real audio wrapper's
+speech-to-text + audio-event tagging. The protocol named an AudioSet subset, but
+AudioSet distributes only YouTube ids (no hosted audio), so it is effectively
+ungettable.
+Options considered: (a) reconstruct AudioSet from YouTube (fragile, ToS, dead
+ids); (b) public ungated proxies. Chose (b).
+Decision: Two honest sub-metrics on public, ungated data, run through the real
+audio wrapper (`force_mode="real"`) in `~/.venv-tri`:
+ - Whisper WER on LibriSpeech test-clean (CC BY 4.0): `jiwer` corpus WER after a
+   documented normalisation (lowercase, strip punctuation) — LibriSpeech
+   references are UPPERCASE/unpunctuated, Whisper adds case+punct.
+ - YAMNet top-1 + top-5 on ESC-50 (Piczak 2015, CC BY-NC 3.0, academic
+   non-commercial) against an APPROXIMATE, hand-built ESC-50 -> AudioSet
+   display-name map (only mapped categories sampled). top-5 is the fair headline
+   given the approximate map; top-1 is a strict lower bound.
+New loader `src/triguard/data/audio_datasets.py` (streams + persists wavs +
+manifest under gitignored `data/t4_samples/`, mirrors the T2 loader); new harness
+`src/triguard/evaluation/run_t4.py`; one slow loader test; `jiwer` pinned in
+`[eval]` + `requirements.txt`.
+Reason: honest, reproducible, ethics-clean public data; the AudioSet substitution
+and approximate map are documented as limitations, not hidden.
+Impact: fast suite 23 passed, 7 skipped (was 6; +1 new slow test). Schema +
+wrappers + Windows `.venv` untouched. `data/t4_samples/` gitignored; committed
+evidence is `outputs/evaluation/<ts>/t4/results.json`.
+Result (run `20260704-153729`, `~/.venv-tri` py3.12, `USE_TF=0`, Whisper `tiny` +
+YAMNet `yamnet/1`, seed 42, n=50 each, both `wrapper_modes` = `real-audio`):
+ - Whisper WER (LibriSpeech test-clean): corpus **0.0971**, mean/clip 0.1314.
+ - YAMNet (ESC-50, 29 mapped categories): top-1 **0.32**, top-5 **0.66**.
+Honest reading: whisper-tiny on clean read speech gives ~9.7% WER (a best case,
+not noisy/adversarial moderation audio); YAMNet top-5 0.66 under an approximate
+category map — the top-1/top-5 gap largely reflects map coarseness + AudioSet's
+finer ontology, not only model error.

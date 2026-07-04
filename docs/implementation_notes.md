@@ -288,3 +288,47 @@ documented follow-up.
 
 **Fast suite in `~/.venv-tri`:** `PYTHONPATH=src ~/.venv-tri/bin/python -m pytest
 -q` -> 23 passed, 6 skipped (offline defaults intact; `TRIGUARD_MOCK=1` still works).
+
+### Evaluation track T4 — real audio wrapper (Whisper WER + YAMNet events)
+
+Measures the real audio wrapper (`force_mode="real"`) on public, ungated data.
+The protocol named an AudioSet subset, but AudioSet ships only YouTube ids (no
+hosted audio); LibriSpeech test-clean (WER) and ESC-50 (event tagging) are used as
+public proxies — documented as a limitation, not hidden.
+
+| sub-metric | dataset | licence | metric |
+|---|---|---|---|
+| Whisper WER | LibriSpeech test-clean (`openslr/librispeech_asr`, clean/test) | CC BY 4.0 | jiwer corpus WER (normalised) |
+| YAMNet events | ESC-50 (`ashraq/esc50`, Piczak 2015) | CC BY-NC 3.0 (academic, non-commercial) | top-1 + top-5 hit rate |
+
+Loader `src/triguard/data/audio_datasets.py` streams (seed + cap), writes each
+clip as a 16 kHz wav + `manifest.json` under gitignored `data/t4_samples/`
+(mirrors the T2 loader). WER normalisation: lowercase, remove punctuation, collapse
+spaces (LibriSpeech references are UPPERCASE/unpunctuated; Whisper adds
+case+punct). YAMNet scoring uses an APPROXIMATE, hand-built ESC-50 -> AudioSet
+display-name map (`ESC50_TO_YAMNET`, echoed verbatim into results.json); only
+mapped categories are sampled, so top-1 is a strict lower bound and top-5 is the
+fair headline. `jiwer` is pinned in the `[eval]` extra.
+
+**Reproduce (WSL, `~/.venv-tri`, `USE_TF=0`):**
+
+```bash
+# once: WER dep into the venv
+.venv-linux/bin/uv pip install -p ~/.venv-tri "jiwer>=3.0,<4"
+USE_TF=0 PYTHONPATH=src ~/.venv-tri/bin/python -m triguard.evaluation.run_t4 \
+  --sample-size 50 --seed 42
+# -> outputs/evaluation/<ts>/t4/results.json
+```
+
+**Result** (run `20260704-153729`, py3.12 `~/.venv-tri`, seed 42, n=50 each, both
+`wrapper_modes` = `real-audio`; Whisper `tiny` + YAMNet `yamnet/1`):
+
+| sub-metric | n | result |
+|---|---|---|
+| Whisper WER (LibriSpeech test-clean) | 50 | corpus 0.0971, mean/clip 0.1314 |
+| YAMNet events (ESC-50, 29 mapped categories) | 50 | top-1 0.32, top-5 0.66 |
+
+Honest reading: whisper-tiny on clean read speech ~9.7% WER — a best case, not
+noisy/adversarial moderation audio. YAMNet top-5 0.66 under an approximate map; the
+top-1/top-5 gap largely reflects map coarseness + AudioSet's finer ontology, not
+only model error. Fast suite: 23 passed, 7 skipped (offline defaults intact).

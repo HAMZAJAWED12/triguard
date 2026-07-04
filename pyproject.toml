@@ -20,6 +20,8 @@ eval = [
     "transformers>=4.40,<5",
     "torch>=2.2,<3",
     "pillow>=10,<12",
+    # T4 audio eval — word error rate (Whisper) on LibriSpeech
+    "jiwer>=3.0,<4",
 ]
 # Sprint 3 — real audio (Whisper + YAMNet). REQUIRES Python <= 3.12
 # (TensorFlow / numba have no 3.14 wheels). Install into a py3.12 venv;
