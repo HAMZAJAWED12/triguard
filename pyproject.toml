@@ -22,6 +22,11 @@ eval = [
     "pillow>=10,<12",
     # T4 audio eval — word error rate (Whisper) on LibriSpeech
     "jiwer>=3.0,<4",
+    # Prompt 5 — FastAPI demo (httpx = TestClient dependency)
+    "fastapi>=0.110,<1",
+    "uvicorn>=0.27,<1",
+    "python-multipart>=0.0.9,<1",
+    "httpx>=0.27,<1",
 ]
 # Sprint 3 — real audio (Whisper + YAMNet). REQUIRES Python <= 3.12
 # (TensorFlow / numba have no 3.14 wheels). Install into a py3.12 venv;

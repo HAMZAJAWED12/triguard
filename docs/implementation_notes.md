@@ -381,3 +381,35 @@ wording/context that toxic-bert flags only when overtly toxic. Modest by design,
 documented. Fast suite: 23 passed, 8 skipped. (Note: in the combined venv a
 `pytest --run-slow` process can SIGSEGV at interpreter teardown — a torch atexit
 artifact; the test assertions pass first, and the default fast lane is unaffected.)
+
+### FastAPI demo surface (Prompt 5)
+
+A thin HTTP layer (`src/triguard/api/main.py`) over the orchestrator — no wrapper,
+orchestrator or schema change. Endpoints:
+
+| method + path | purpose |
+|---|---|
+| `GET /` | health `{status:"ok", version}` |
+| `GET /ui` | single-page demo UI (`static/index.html`) |
+| `POST /analyse/text` | `{text}` -> TriGuardResult JSON |
+| `POST /analyse/multimodal` | multipart text + image/audio uploads -> TriGuardResult JSON |
+
+Uploads are written to temp files, passed to the pipeline, and removed in a
+`finally`. `judge_mode=None` is passed through so `TRIGUARD_JUDGE` (default rule)
+and `TRIGUARD_*_BACKEND` (default mock/sklearn) are honoured — the API never forces
+real models. Binds `127.0.0.1` only. The UI page is self-contained (inline CSS/JS,
+no CDN, WCAG-AA contrast, >=16px body, system fonts).
+
+```bash
+pip install fastapi uvicorn python-multipart          # or pip install -e ".[eval]"
+PYTHONPATH=src uvicorn triguard.api.main:app --host 127.0.0.1 --port 8001
+# http://127.0.0.1:8001/ui   (health at http://127.0.0.1:8001/)
+```
+
+Tests (`tests/test_api.py`) use `pytest.importorskip("fastapi"/"httpx")` +
+`TRIGUARD_MOCK=1` — fully offline where the deps exist, clean skip where they
+don't. Fast suite: 27 passed / 8 skipped in `~/.venv-tri`; 24 passed / 9 skipped in
+the Windows `.venv` (the api module importorskip-skips as one entry). Boot smoke
+(uvicorn 127.0.0.1:8001, `TRIGUARD_MOCK=1`): `GET /` ->
+`{"status":"ok","version":"0.1.0-tier-a"}`, `POST /analyse/text` -> schema-valid
+TriGuardResult, `GET /ui` -> HTML.

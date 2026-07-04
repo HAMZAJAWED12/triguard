@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TriGuard — content review demo</title>
+  <style>
+    :root{
+      --bg:#ffffff; --fg:#1a1a1a; --muted:#4a4a4a; --line:#c9c9c9;
+      --panel:#f4f4f6; --accent:#0b3d91; --accent-fg:#ffffff;
+      --safe-bg:#e6f4ea; --safe-fg:#0b5d1e;
+      --border-bg:#fff4e5; --border-fg:#7a4a02;
+      --harm-bg:#fdeaea; --harm-fg:#8a1212;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:var(--bg); color:var(--fg);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      font-size:16px; line-height:1.5;
+    }
+    .wrap{max-width:760px; margin:0 auto; padding:24px 16px 64px}
+    h1{font-size:1.6rem; margin:0 0 4px}
+    p.sub{color:var(--muted); margin:0 0 24px}
+    form{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:20px}
+    label{display:block; font-weight:600; margin:14px 0 6px}
+    textarea,input[type=file]{
+      width:100%; font-size:16px; font-family:inherit; color:var(--fg);
+      background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;
+    }
+    textarea{min-height:96px; resize:vertical}
+    button{
+      margin-top:18px; font-size:16px; font-weight:600; cursor:pointer;
+      background:var(--accent); color:var(--accent-fg); border:0; border-radius:6px;
+      padding:12px 20px;
+    }
+    button:disabled{opacity:.6; cursor:progress}
+    button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid #0b3d91; outline-offset:2px}
+    .result{margin-top:24px}
+    .badge{display:inline-block; font-weight:700; padding:6px 12px; border-radius:6px; font-size:1.05rem}
+    .safe{background:var(--safe-bg); color:var(--safe-fg)}
+    .borderline{background:var(--border-bg); color:var(--border-fg)}
+    .harmful{background:var(--harm-bg); color:var(--harm-fg)}
+    .card{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px; margin-top:16px}
+    .card h3{margin:0 0 8px; font-size:1rem}
+    dl{margin:0; display:grid; grid-template-columns:auto 1fr; gap:4px 12px}
+    dt{font-weight:600; color:var(--muted)}
+    dd{margin:0}
+    .rationale{font-size:1.05rem; margin:12px 0}
+    .muted{color:var(--muted)}
+    .err{background:var(--harm-bg); color:var(--harm-fg); padding:12px; border-radius:6px; margin-top:16px}
+    code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.9em}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>TriGuard — content review demo</h1>
+    <p class="sub">Submit text, an image and/or an audio clip. TriGuard returns a
+      <strong>recommended</strong> decision for a human reviewer — it does not moderate automatically.</p>
+
+    <form id="f" aria-describedby="hint">
+      <label for="text">Text</label>
+      <textarea id="text" name="text" placeholder="Type or paste text to review…"></textarea>
+
+      <label for="image">Image (optional)</label>
+      <input type="file" id="image" name="image" accept="image/*">
+
+      <label for="audio">Audio (optional)</label>
+      <input type="file" id="audio" name="audio" accept="audio/*">
+
+      <p id="hint" class="muted">At least one field is required.</p>
+      <button type="submit" id="go">Analyse</button>
+    </form>
+
+    <section id="out" class="result" aria-live="polite"></section>
+  </main>
+
+  <script>
+    const f = document.getElementById('f');
+    const out = document.getElementById('out');
+    const go = document.getElementById('go');
+
+    function esc(s){ return String(s==null?'':s).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+    function evidenceCard(title, rows){
+      const dl = rows.map(([k,v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+      return `<div class="card"><h3>${esc(title)}</h3><dl>${dl}</dl></div>`;
+    }
+
+    function render(r){
+      const label = r.risk_label || 'unknown';
+      let html = `<span class="badge ${esc(label)}">${esc(label.toUpperCase())}</span>`;
+      html += ` &nbsp; recommended action: <strong>${esc(r.recommended_action)}</strong>`;
+      html += `<p class="rationale">${esc(r.rationale)}</p>`;
+      if (r.uncertainties && r.uncertainties.length)
+        html += `<p class="muted">Uncertainties: ${esc(r.uncertainties.join('; '))}</p>`;
+
+      if (r.text_evidence){
+        const t = r.text_evidence;
+        html += evidenceCard('Text', [
+          ['toxicity', Number(t.toxicity_score).toFixed(3)],
+          ['labels', (t.top_labels||[]).join(', ') || '—'],
+          ['confidence', Number(t.confidence).toFixed(3)],
+        ]);
+      }
+      if (r.image_evidence){
+        const i = r.image_evidence;
+        html += evidenceCard('Image', [
+          ['caption', i.caption],
+          ['risk cues', (i.visual_risk_cues||[]).join(', ') || '—'],
+          ['confidence', Number(i.confidence).toFixed(3)],
+        ]);
+      }
+      if (r.audio_evidence){
+        const a = r.audio_evidence;
+        const tags = (a.yamnet_tags||[]).map(x=>Array.isArray(x)?x[0]:x).join(', ') || '—';
+        html += evidenceCard('Audio', [
+          ['transcript', a.transcript],
+          ['tags', tags],
+          ['confidence', Number(a.transcript_confidence).toFixed(3)],
+        ]);
+      }
+      const mv = r.model_versions || {};
+      html += evidenceCard('Models used', Object.keys(mv).map(k=>[k, mv[k]]));
+      html += `<p class="muted">risk score: ${esc(Number(r.risk_score).toFixed(3))} · latency: ${esc(r.latency_ms)} ms</p>`;
+      out.innerHTML = html;
+    }
+
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      out.innerHTML = '<p class="muted">Analysing…</p>';
+      go.disabled = true;
+      try {
+        const fd = new FormData();
+        const text = document.getElementById('text').value.trim();
+        const img = document.getElementById('image').files[0];
+        const aud = document.getElementById('audio').files[0];
+        if (text) fd.append('text', text);
+        if (img) fd.append('image', img);
+        if (aud) fd.append('audio', aud);
+        const res = await fetch('/analyse/multimodal', { method:'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok) { out.innerHTML = `<p class="err">${esc(data.detail || res.status)}</p>`; return; }
+        render(data);
+      } catch (err) {
+        out.innerHTML = `<p class="err">Request failed: ${esc(err.message)}</p>`;
+      } finally {
+        go.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

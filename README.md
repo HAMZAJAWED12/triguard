@@ -26,6 +26,17 @@ PYTHONPATH=src python -m triguard.evaluation.run_eval
 PYTHONPATH=src python -m triguard.cli run data/sample_inputs/sample_harmful.json
 ```
 
+### FastAPI demo (browser UI)
+
+```bash
+pip install fastapi uvicorn python-multipart          # (or: pip install -e ".[eval]")
+PYTHONPATH=src uvicorn triguard.api.main:app --host 127.0.0.1 --port 8001
+# open http://127.0.0.1:8001/ui   (health JSON at http://127.0.0.1:8001/)
+```
+
+Defaults are offline (mock/rule); set `TRIGUARD_TEXT_BACKEND=hf` etc. to opt into
+real models. Binds localhost only.
+
 ### Text-track evaluation on a real dataset (T2)
 
 ```bash

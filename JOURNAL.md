@@ -338,3 +338,35 @@
 ### Next steps
 - Optional: fix `model_versions` pipeline hardcode; FastAPI demo; Preliminary
   Report update.
+
+---
+
+## Week 14 — FastAPI demo surface (Prompt 5)
+### Planned work
+- A small HTTP surface so a non-technical reviewer can submit content and read the
+  structured decision. Demo layer only.
+
+### Completed work
+- `src/triguard/api/main.py` — `GET /` (health), `GET /ui`, `POST /analyse/text`,
+  `POST /analyse/multimodal` (uploads -> temp files -> pipeline -> cleanup). Env
+  flags honoured; no real models forced; binds 127.0.0.1.
+- `src/triguard/api/static/index.html` — one self-contained page (no CDN, WCAG-AA,
+  >=16px, system fonts) posting to `/analyse/multimodal`.
+- `tests/test_api.py` — importorskip + `TRIGUARD_MOCK=1`; GET / + text endpoints.
+- Deps `fastapi`/`uvicorn`/`python-multipart`/`httpx` pinned in requirements +
+  `[eval]`; README run line.
+
+### Problems encountered
+- The relocated repo had no `.venv-linux` (gitignored, path-bound) -> installed the
+  api deps into `~/.venv-tri` via `ensurepip` + pip.
+
+### Decisions made
+- D-020: FastAPI demo layer; offline/skip-safe tests; no core changes.
+
+### Tests/evidence produced
+- Fast suite 27 passed / 8 skipped (`~/.venv-tri`); 24 passed / 9 skipped (Windows,
+  api module importorskip-skips). Boot smoke: uvicorn 127.0.0.1:8001 serves `/`,
+  `/analyse/text`, `/ui`.
+
+### Next steps
+- Optional: Preliminary Report update with the API demo + eval numbers.

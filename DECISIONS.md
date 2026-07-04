@@ -398,3 +398,31 @@ new test), 8 skipped. Verified all-real one-pass
 `real-blip:Salesforce/blip-image-captioning-base@82a37760796d`, `audio_model`
 `real-audio`, `llm_judge` `ollama` — agreeing with evidence modes real-hf /
 real-blip / real-audio. No more `mock-v1`.
+
+## Decision 020: FastAPI demo surface (Prompt 5)
+Date: 2026-07-04
+Status: accepted
+
+Context: A non-technical reviewer needs to submit content and read the structured
+decision without the CLI (Prompt 5).
+Decision: Add `src/triguard/api/main.py` (FastAPI) as a thin demo layer over the
+existing orchestrator — no wrapper/orchestrator/schema change. Endpoints: `GET /`
+(health `{status, version}`), `GET /ui` (single-page UI), `POST /analyse/text`
+(`{text}` -> TriGuardResult JSON), `POST /analyse/multimodal` (multipart text +
+image/audio uploads -> temp files -> pipeline -> `unlink` in `finally` -> JSON).
+`judge_mode=None` is passed through so env flags are honoured (judge default rule);
+perception honours `TRIGUARD_*_BACKEND` (default mock/sklearn). No real models
+forced. Binds `127.0.0.1` only. Single self-contained `static/index.html`
+(inline CSS/JS, no CDN, WCAG-AA contrast, >=16px, system fonts).
+Tests `tests/test_api.py` use `importorskip("fastapi"/"httpx")` + `TRIGUARD_MOCK=1`
+so they run fully offline where the deps exist and SKIP cleanly where they don't
+(the Windows offline venv). Deps `fastapi`, `uvicorn`, `python-multipart`, `httpx`
+pinned in requirements + `[eval]`.
+Reason: a browser demo for the video/report without touching the core; offline +
+skip-safe tests keep the fast lane green everywhere.
+Impact: new api package + UI + tests + README run line. Fast suite: 27 passed / 8
+skipped in `~/.venv-tri` (24 + 3 api tests); 24 passed / 9 skipped in the Windows
+`.venv` (the api module `importorskip`-skips as one entry). Boot smoke (uvicorn
+127.0.0.1:8001, `TRIGUARD_MOCK=1`): `GET /` ->
+`{"status":"ok","version":"0.1.0-tier-a"}`; `POST /analyse/text` -> schema-valid
+TriGuardResult; `GET /ui` -> HTML. Schema + wrappers + orchestrator untouched.
