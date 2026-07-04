@@ -426,3 +426,21 @@ skipped in `~/.venv-tri` (24 + 3 api tests); 24 passed / 9 skipped in the Window
 127.0.0.1:8001, `TRIGUARD_MOCK=1`): `GET /` ->
 `{"status":"ok","version":"0.1.0-tier-a"}`; `POST /analyse/text` -> schema-valid
 TriGuardResult; `GET /ui` -> HTML. Schema + wrappers + orchestrator untouched.
+
+## Decision 021: model_versions judge label honours the env-driven mode
+Date: 2026-07-04
+Status: accepted
+
+Context: D-019 labelled `model_versions["llm_judge"]` from the pipeline's
+`judge_mode` argument only. The FastAPI demo passes `judge_mode=None` to honour
+env flags, so an env-driven `TRIGUARD_JUDGE=ollama` run (llama3 actually judging)
+was mislabelled `rule`.
+Decision: Derive the label from the EFFECTIVE judge —
+`judge_mode or os.getenv("TRIGUARD_JUDGE", "rule")`, mirroring `llm_judge.judge`
+itself — so env-driven ollama is labelled `ollama` (or `ollama->rule` on fallback).
+Values/behaviour only; schema shape + wrappers untouched.
+Impact: `pipeline.py` (+`import os`); new offline test
+`test_model_versions_judge_reflects_env_ollama` (env ollama + unreachable host ->
+`ollama->rule`). Fast suite 25 passed (was 24; +1), 9 skipped (Windows). Verified
+live: the API in real mode with `TRIGUARD_JUDGE=ollama` now reports
+`llm_judge: ollama` alongside the real llama3 rationale.

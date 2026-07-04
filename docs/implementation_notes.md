@@ -286,7 +286,10 @@ derives from each evidence's `raw["mode"]`/`model_name`/`model_revision`, so it
 reads e.g. `real-hf:unitary/toxic-bert@4d6c22e74ba2`,
 `real-blip:Salesforce/blip-image-captioning-base@82a37760796d`, `real-audio`,
 `ollama` (or `ollama->rule` on fallback). See D-019 and the orchestrator test
-`test_model_versions_agree_with_raw_mode`.
+`test_model_versions_agree_with_raw_mode`. The judge label is derived from the
+EFFECTIVE judge (`judge_mode or TRIGUARD_JUDGE`), so an env-driven ollama run
+(e.g. from the API, which passes `judge_mode=None`) is labelled `ollama`, not
+`rule` (D-021).
 
 **Fast suite in `~/.venv-tri`:** `PYTHONPATH=src ~/.venv-tri/bin/python -m pytest
 -q` -> 23 passed, 6 skipped (offline defaults intact; `TRIGUARD_MOCK=1` still works).

@@ -4,6 +4,7 @@ Orchestrator: ties the wrappers and judge together.
 from __future__ import annotations
 
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Optional, Union
@@ -117,7 +118,11 @@ def run(
     # 2. Judge
     judge_input = JudgeInput(text=text_ev, image=image_ev, audio=audio_ev)
     judge_out = llm_judge.judge(judge_input, force_mode=judge_mode)
-    if (judge_mode or "rule") == "ollama":
+    # Label from the EFFECTIVE judge (mirrors llm_judge.judge): the arg wins,
+    # else TRIGUARD_JUDGE, else rule — so an env-driven ollama run is labelled
+    # correctly even when the caller passes judge_mode=None (e.g. the API).
+    effective_judge = judge_mode or os.getenv("TRIGUARD_JUDGE", "rule")
+    if effective_judge == "ollama":
         fell_back = any(u.startswith(_JUDGE_FALLBACK_TAGS) for u in judge_out.uncertainties)
         versions["llm_judge"] = "ollama->rule" if fell_back else "ollama"
     else:

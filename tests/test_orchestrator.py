@@ -52,3 +52,12 @@ def test_model_versions_agree_with_raw_mode() -> None:
     assert r.model_versions["image_model"] == "mock"
     assert r.model_versions["audio_model"] == "mock"
     assert r.model_versions["llm_judge"] == "rule"
+
+
+def test_model_versions_judge_reflects_env_ollama(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Env-driven ollama (judge_mode=None) must be labelled ollama, not rule."""
+    monkeypatch.setenv("TRIGUARD_JUDGE", "ollama")
+    monkeypatch.setenv("OLLAMA_HOST", "http://127.0.0.1:1")  # unreachable -> fallback
+    r = pipeline.run(text="hello world")  # judge_mode=None honours the env
+    assert r.model_versions["llm_judge"] in {"ollama", "ollama->rule"}
+    assert r.model_versions["llm_judge"] != "rule"
