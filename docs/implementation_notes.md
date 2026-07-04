@@ -280,11 +280,13 @@ placeholder paths that do not exist — keeps text `real-hf` but degrades image 
 audio to `mode: "mock"` (missing files), and llama3 returns `borderline`/`review`.
 This shows the per-component fallback working end-to-end in the combined process.
 
-**Known caveat (unchanged):** `TriGuardResult.model_versions` is still hardcoded in
-the orchestrator (reports `sklearn-tfidf-lr-v1` / `mock-v1` even on this all-real
-run). Verify which backend actually ran via each evidence object's `raw["mode"]`,
-not `model_versions`. Fixing that touches the pipeline and is left as a separate,
-documented follow-up.
+**Caveat (RESOLVED in D-019):** `TriGuardResult.model_versions` used to be
+hardcoded (`sklearn-tfidf-lr-v1` / `mock-v1` even on an all-real run). It now
+derives from each evidence's `raw["mode"]`/`model_name`/`model_revision`, so it
+reads e.g. `real-hf:unitary/toxic-bert@4d6c22e74ba2`,
+`real-blip:Salesforce/blip-image-captioning-base@82a37760796d`, `real-audio`,
+`ollama` (or `ollama->rule` on fallback). See D-019 and the orchestrator test
+`test_model_versions_agree_with_raw_mode`.
 
 **Fast suite in `~/.venv-tri`:** `PYTHONPATH=src ~/.venv-tri/bin/python -m pytest
 -q` -> 23 passed, 6 skipped (offline defaults intact; `TRIGUARD_MOCK=1` still works).

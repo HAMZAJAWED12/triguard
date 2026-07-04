@@ -21,6 +21,34 @@ log = logging.getLogger("triguard.pipeline")
 
 VERSION = "0.1.0-tier-a"
 
+# Single source of truth: evidence raw["mode"] -> canonical backend token.
+_MODE_BACKEND = {
+    "mock": "mock",
+    "real": "sklearn",            # text sklearn tier tags raw["mode"]="real"
+    "real-hf": "real-hf",
+    "real-blip": "real-blip",
+    "real-audio": "real-audio",
+    "real-audio-partial": "real-audio-partial",
+}
+_JUDGE_FALLBACK_TAGS = ("ollama_unavailable", "judge_output_invalid")
+
+
+def backend_of_mode(mode: Optional[str]) -> str:
+    """Canonical backend token for an evidence's raw['mode']."""
+    return _MODE_BACKEND.get(mode or "", "unknown")
+
+
+def _version(ev: Union[TextEvidence, ImageEvidence, AudioEvidence]) -> str:
+    """model_versions value reflecting the backend that actually produced ev."""
+    raw = ev.raw
+    token = backend_of_mode(raw.get("mode"))
+    name, rev = raw.get("model_name"), raw.get("model_revision")
+    if name and rev:
+        return f"{token}:{name}@{str(rev)[:12]}"
+    if name:
+        return f"{token}:{name}"
+    return token
+
 
 def run(
     *,
@@ -47,7 +75,6 @@ def run(
     if text is not None:
         try:
             text_ev = text_model.analyse(text)
-            versions["text_model"] = "sklearn-tfidf-lr-v1"
         except Exception as e:  # never crash the pipeline on a wrapper bug
             log.warning("text wrapper failed: %s", e)
             text_ev = TextEvidence(
@@ -60,7 +87,6 @@ def run(
     if image is not None:
         try:
             image_ev = image_model.analyse(image)
-            versions["image_model"] = "mock-v1"
         except Exception as e:
             log.warning("image wrapper failed: %s", e)
             image_ev = ImageEvidence(
@@ -71,7 +97,6 @@ def run(
     if audio is not None:
         try:
             audio_ev = audio_model.analyse(audio)
-            versions["audio_model"] = "mock-v1"
         except Exception as e:
             log.warning("audio wrapper failed: %s", e)
             audio_ev = AudioEvidence(
@@ -81,10 +106,22 @@ def run(
                 raw={"error": str(e)},
             )
 
+    # 1b. Record which backend actually produced each evidence (honest versions).
+    if text_ev is not None:
+        versions["text_model"] = _version(text_ev)
+    if image_ev is not None:
+        versions["image_model"] = _version(image_ev)
+    if audio_ev is not None:
+        versions["audio_model"] = _version(audio_ev)
+
     # 2. Judge
     judge_input = JudgeInput(text=text_ev, image=image_ev, audio=audio_ev)
     judge_out = llm_judge.judge(judge_input, force_mode=judge_mode)
-    versions["llm_judge"] = "rule-based-v1" if (judge_mode or "rule") == "rule" else "ollama"
+    if (judge_mode or "rule") == "ollama":
+        fell_back = any(u.startswith(_JUDGE_FALLBACK_TAGS) for u in judge_out.uncertainties)
+        versions["llm_judge"] = "ollama->rule" if fell_back else "ollama"
+    else:
+        versions["llm_judge"] = "rule"
 
     # 3. Build final result
     latency_ms = int((time.perf_counter() - started) * 1000)

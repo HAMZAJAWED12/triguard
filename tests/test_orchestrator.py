@@ -31,3 +31,24 @@ def test_orchestrator_attaches_versions_and_latency() -> None:
     r = pipeline.run(text="Hello world")
     assert "orchestrator" in r.model_versions
     assert r.latency_ms >= 0
+
+
+def test_model_versions_agree_with_raw_mode() -> None:
+    """model_versions must reflect the backend each evidence actually used."""
+    r = pipeline.run(
+        text="Hello there friend",
+        image="/tmp/calm_photo.jpg",
+        audio="/tmp/calm_speech.wav",
+    )
+    for key, ev in (("text_model", r.text_evidence),
+                    ("image_model", r.image_evidence),
+                    ("audio_model", r.audio_evidence)):
+        assert ev is not None
+        token = pipeline.backend_of_mode(ev.raw.get("mode"))
+        assert token != "unknown"
+        assert r.model_versions[key].split(":")[0] == token
+    # offline defaults: text = sklearn tier, image/audio = mock, judge = rule
+    assert r.model_versions["text_model"].split(":")[0] == "sklearn"
+    assert r.model_versions["image_model"] == "mock"
+    assert r.model_versions["audio_model"] == "mock"
+    assert r.model_versions["llm_judge"] == "rule"

@@ -371,3 +371,30 @@ exactly as predicted for a captioner-not-classifier with no OCR. Low recall (0.2
 and near-chance AUROC (0.566): most memes are offensive via wording/context that
 toxic-bert catches only when overtly toxic. This modest result is the real
 finding, documented not hidden.
+
+## Decision 019: model_versions reflects the real backend (was hardcoded)
+Date: 2026-07-04
+Status: accepted
+
+Context: `orchestrator/pipeline.py` hardcoded `model_versions` (text
+`sklearn-tfidf-lr-v1`, image/audio `mock-v1`, judge `rule-based-v1`) regardless of
+the backend that ran — the Sprint-5 all-real JSON reported `mock-v1` next to a real
+BLIP caption, contradicting `raw["mode"]`. Supersedes the "hardcoded, deferred"
+caveat noted in D-016.
+Decision: Populate `model_versions` from each evidence's `raw`: a single
+`backend_of_mode()` map (mock / sklearn / real-hf / real-blip / real-audio /
+real-audio-partial / unknown) plus `model_name@revision` when present. Judge label
+= `rule` / `ollama`, or `ollama->rule` when the Ollama path fell back (uncertainty
+tagged `ollama_unavailable`/`judge_output_invalid`). Schema SHAPE unchanged (still
+`dict[str,str]`); only the values change. Wrappers untouched. New test
+`test_model_versions_agree_with_raw_mode` asserts each value's backend token equals
+`backend_of_mode(evidence.raw["mode"])`.
+Reason: the reported versions must be honest — traceable to the model that actually
+produced each piece of evidence.
+Impact: `pipeline.py` value-building + one test. Fast suite 24 passed (was 23; +1
+new test), 8 skipped. Verified all-real one-pass
+(`outputs/demo_full_real_fixed.json`, `~/.venv-tri`, USE_TF=0, ollama warm):
+`text_model` `real-hf:unitary/toxic-bert@4d6c22e74ba2`, `image_model`
+`real-blip:Salesforce/blip-image-captioning-base@82a37760796d`, `audio_model`
+`real-audio`, `llm_judge` `ollama` — agreeing with evidence modes real-hf /
+real-blip / real-audio. No more `mock-v1`.
