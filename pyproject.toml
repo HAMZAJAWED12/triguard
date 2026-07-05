@@ -30,6 +30,8 @@ eval = [
     # Phase B — opt-in OCR for the image track. RapidOCR (ONNX runtime): torch-free,
     # so it does not disturb the pinned torch/torchvision-free numpy<2 stack.
     "rapidocr-onnxruntime>=1.3,<2",
+    # Phase C — T8 hardware-viability measurement (peak RAM)
+    "psutil>=5.9,<7",
 ]
 # Sprint 3 — real audio (Whisper + YAMNet). REQUIRES Python <= 3.12
 # (TensorFlow / numba have no 3.14 wheels). Install into a py3.12 venv;

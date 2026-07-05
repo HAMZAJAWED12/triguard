@@ -450,3 +450,28 @@ the overlay text in its `text` field.
 Install note: `rapidocr-onnxruntime` (pinned in `[eval]`); re-pin `numpy<2` after
 (some OCR deps pull numpy 2.x). Do NOT use easyocr in this venv — its torchvision
 breaks the torch stack.
+
+### Evaluation completeness — failure analysis, T7 grounding, T8 perf (Phase C)
+
+Three eval-only utilities (no model/schema/pipeline change):
+
+- `failure_analysis.py` — `python -m triguard.evaluation.failure_analysis <results.json>`
+  writes `outputs/evaluation/<ts>/failures/top10.md`: worst misclassifications ranked
+  by severity + a taxonomy (false-positive-harmful / missed-harmful / borderline-drift).
+- `run_t7.py` (+ shared `grounding.py`) — rationale grounding rate = fraction of
+  rationales citing >=1 real evidence token (score/label/caption word/cue/tag), plus a
+  check for invented (unsupplied) modalities. Headline = the **ollama/llama3** rate; the
+  rule judge grounds ~1.0 by construction (it concatenates the evidence). A per-item
+  `usefulness_1to5` column is left blank for a human rater.
+- `run_t8.py` — p50/p95 + cold-start latency + peak RSS (`psutil`) over the T6 set; run
+  once per backend config to compare mock vs real.
+
+Result (real, T6 n=18): T7 grounding rule 1.0 / **ollama 1.0** (18/18 rationales cite
+real evidence, 0 invented modalities — the LLM judge is well grounded). T8 real
+(hf+blip+real-audio, rule judge): p50 31.1 ms, p95 4075 ms, cold-start 4075 ms, peak RSS
+2.87 GB — vs mock p50 0.0 ms / 34.5 MB. `psutil` pinned in `[eval]`.
+
+Caveats: T7 `grounding_rate` is a **floor** metric — it counts a rationale as grounded
+if it cites >=1 evidence token; it does not measure explanation completeness or quality,
+and n=18. T8's 31 ms p50 is **perception + the rule judge**; the ollama/llama3 judge adds
+~seconds per item (see D-015 cold-load), so an LLM-judged pipeline is far slower.

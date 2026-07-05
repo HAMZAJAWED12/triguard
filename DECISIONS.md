@@ -518,3 +518,31 @@ text in its `text` field. Conclusion (report-worthy): OCR's value is real and la
 when routed to a real classifier (+0.37 F1 on the image track); folding it into the
 narrow keyword cues wastes it (0.0 delta, sub-finding); it looks redundant on Memotion
 solely because the dataset already carries the text.
+
+## Decision 024: Evaluation completeness — failure analysis + T7 grounding + T8 perf (Phase C)
+Date: 2026-07-05
+Status: accepted
+
+Context: Roadmap Phase C — finish the designed-but-unbuilt evaluation utilities.
+Eval-only; no model/schema/pipeline change.
+Decision: Add three utilities:
+ - `failure_analysis.py` (Prompt 7): reads any results.json (per-sample `results` or a
+   `failures` list), ranks misclassifications by severity, writes a top-N markdown with
+   a taxonomy (false-positive-harmful / missed-harmful / borderline-drift).
+ - `run_t7.py` (+ shared `grounding.py`): rationale grounding rate = fraction of
+   rationales citing >=1 real evidence token; headline is the ollama/llama3 rate (the
+   rule judge grounds ~1.0 by construction). A blank human `usefulness_1to5` column is
+   left for a rater.
+ - `run_t8.py`: p50/p95 + cold-start latency + peak RSS (psutil) over the T6 set, run
+   once per backend config (mock vs real).
+Two fast offline unit tests (`test_grounding.py`, `test_failure_analysis.py`); `psutil`
+pinned in `[eval]`.
+Reason: honest evaluation is the project's stated strength; these close T7/T8 + the
+failure taxonomy.
+Impact: fast suite 29 passed (was 26; +3), 10 skipped. No model/schema change.
+Result (real, T6 set n=18):
+ - failure_analysis on the committed T3 run: 10 failures -> `failures/top10.md`.
+ - T7 grounding: rule 1.0 (trivial), **ollama/llama3 1.0** (18/18 rationales cite real
+   evidence, 0 invented modalities) — the LLM judge is well grounded.
+ - T8: mock p50 0.0 ms / peak RSS 34.5 MB; real (hf+blip+real-audio, rule judge) p50
+   31.1 ms / p95 4075 ms / cold-start 4075 ms / peak RSS 2.87 GB.

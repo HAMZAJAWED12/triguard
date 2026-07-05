@@ -1,0 +1,22 @@
+{
+  "track": "T8",
+  "run_at": "2026-07-05T11:36:39.082281+00:00",
+  "n": 18,
+  "config": {
+    "judge": "rule",
+    "mock": false,
+    "text_backend": "hf",
+    "image_backend": "blip",
+    "audio_backend": "real",
+    "run_env": "wsl-ubuntu-py312-tri"
+  },
+  "latency_ms": {
+    "p50": 31.1,
+    "p95": 4075.1,
+    "min": 23.5,
+    "max": 5386.3,
+    "cold_start_ms": 4075.1
+  },
+  "peak_rss_mb": 2873.7,
+  "note": "cold_start_ms is the first-call latency (includes model load for real backends). Run once per backend config to compare mock vs real."
+}

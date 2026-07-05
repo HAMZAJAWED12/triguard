@@ -1,0 +1,22 @@
+{
+  "track": "T8",
+  "run_at": "2026-07-05T11:33:54.811815+00:00",
+  "n": 18,
+  "config": {
+    "judge": "rule",
+    "mock": true,
+    "text_backend": "sklearn",
+    "image_backend": "mock",
+    "audio_backend": "mock",
+    "run_env": "win32"
+  },
+  "latency_ms": {
+    "p50": 0.0,
+    "p95": 0.1,
+    "min": 0.0,
+    "max": 0.1,
+    "cold_start_ms": 0.1
+  },
+  "peak_rss_mb": 34.5,
+  "note": "cold_start_ms is the first-call latency (includes model load for real backends). Run once per backend config to compare mock vs real."
+}

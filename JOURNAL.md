@@ -433,3 +433,31 @@
 ### Next steps
 - Roadmap Phase C (failure analysis, T7 grounding, T8 perf). Optionally route OCR
   text to the toxic-bert text track to realise its value.
+
+---
+
+## Week 17 — Evaluation completeness: failure analysis + T7 + T8 (roadmap Phase C)
+### Planned work
+- Finish the designed-but-unbuilt eval utilities: failure taxonomy, rationale
+  grounding, hardware viability.
+
+### Completed work
+- `src/triguard/evaluation/failure_analysis.py` — top-N worst cases + taxonomy from
+  any results.json.
+- `src/triguard/evaluation/grounding.py` + `run_t7.py` — rationale grounding rate
+  (headline = ollama/llama3; rule ~1.0 by construction); blank human usefulness column.
+- `src/triguard/evaluation/run_t8.py` — p50/p95 + cold-start latency + peak RSS
+  (psutil), mock vs real.
+- Fast tests `test_grounding.py`, `test_failure_analysis.py`; `psutil` pinned.
+
+### Decisions made
+- D-024: Phase-C eval utilities (failure analysis + T7 grounding + T8 perf).
+
+### Tests/evidence produced
+- Fast suite 29 passed / 10 skipped. Real (T6 n=18): T7 grounding rule 1.0, ollama
+  1.0 (0 invented modalities); T8 real p50 31.1 ms / p95 4075 ms / cold-start 4075 ms
+  / peak RSS 2.87 GB (mock p50 0.0 ms / RSS 34.5 MB); failure_analysis 10 failures.
+
+### Next steps
+- Roadmap Phase D (demo wow) + Phase E (report integration). Optional: LLM-judge
+  bias audit (Zheng).
