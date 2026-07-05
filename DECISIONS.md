@@ -542,8 +542,10 @@ failure taxonomy.
 Impact: fast suite 29 passed (was 26; +3), 10 skipped. No model/schema change.
 Result (real, T6 set n=18):
  - failure_analysis on the committed T3 run: 10 failures -> `failures/top10.md`.
- - T7 grounding: rule 1.0 (trivial), **ollama/llama3 1.0** (18/18 rationales cite real
-   evidence, 0 invented modalities) — the LLM judge is well grounded.
+ - T7 grounding: **ollama/llama3 1.0 measured** (18/18 rationales cite real
+   evidence, 0 invented modalities) — the LLM judge is well grounded. The rule
+   judge grounds ~1.0 by construction (it concatenates the evidence) and was
+   not separately measured.
  - T8: mock p50 0.0 ms / peak RSS 34.5 MB; real (hf+blip+real-audio, rule judge) p50
    31.1 ms / p95 4075 ms / cold-start 4075 ms / peak RSS 2.87 GB.
 
@@ -621,6 +623,14 @@ rather than defaulting to `real`, and its `source` string no longer claims
 git-committed status (it reads what is on disk). Two new regression tests
 (temp-file cleanup; tokens-then-death mid-stream fallback) + NO_PROXY guards
 keep the closed-port fallback tests offline under system proxies.
+Result (verified live, WSL `~/.venv-tri`, mock perception, warm llama3): the
+offline smoke shows every endpoint degrading honestly (`ollama->rule`,
+`rule_fallback`); the real smoke streamed 98 token events ending in a
+schema-valid `source:"ollama"` verdict (borderline/review, risk 0.55, grounded
+rationale citing the 0.45 toxicity), and compare returned rule 0 ms vs llama3
+5451 ms on the same evidence. `--run-slow` on the two Phase D test files with
+Ollama up: 12 passed. `/eval/summary` spot-check equals the committed files
+(t2 0.542/0.928; t8 34.5/2873.7 MB) — asserted by test, not transcribed.
 
 ## Decision 026: T6 evaluation set v2 — student-reviewed replacement manifest
 Date: 2026-07-05
@@ -653,11 +663,3 @@ because several v2 borderline items are mild negative opinions that
 toxic-bert scores below the rule judge's 0.35 borderline threshold — the
 borderline class drives the drop. That is a finding about the pipeline's
 recall on mild incivility, not a defect in the set; report-worthy.
-Result (verified live, WSL `~/.venv-tri`, mock perception, warm llama3): the
-offline smoke shows every endpoint degrading honestly (`ollama->rule`,
-`rule_fallback`); the real smoke streamed 98 token events ending in a
-schema-valid `source:"ollama"` verdict (borderline/review, risk 0.55, grounded
-rationale citing the 0.45 toxicity), and compare returned rule 0 ms vs llama3
-5451 ms on the same evidence. `--run-slow` on the two Phase D test files with
-Ollama up: 12 passed. `/eval/summary` spot-check equals the committed files
-(t2 0.542/0.928; t8 34.5/2873.7 MB) — asserted by test, not transcribed.

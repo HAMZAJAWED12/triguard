@@ -1,7 +1,7 @@
 # Session Handoff — TriGuard
 
-Read this FIRST in a new session, plus `CLAUDE.md`, `DECISIONS.md` (D-001..D-025),
-`JOURNAL.md` (Wk1..18), `docs/implementation_notes.md`. This captures the current
+Read this FIRST in a new session, plus `CLAUDE.md`, `DECISIONS.md` (D-001..D-026),
+`JOURNAL.md` (Wk1..18b), `docs/implementation_notes.md`. This captures the current
 state + the non-obvious environment so work resumes without re-discovery.
 
 ## Location (CHANGED — off OneDrive)
@@ -11,10 +11,11 @@ branch `master`. The old OneDrive copy
 EXCEPT its `.venv` is still the Windows offline interpreter (see below).
 
 Latest commits (newest first):
+- `6bfdfc3` feat(eval): T6 v2 student-reviewed set (D-026) + gitignored local_demo preset media
+- `e866541` feat(demo): Phase D - presets, rule-vs-llama3 compare, streaming judge, eval dashboard (D-025)
 - `c8f22a8` feat(eval): failure analysis + T7 grounding + T8 perf (Phase C)
 - `3bc03cc` feat(image): opt-in OCR (RapidOCR) + T3 OCR->text +0.37 F1 (Phase B)
-- `c4631ba` feat(eval): T6 tri-modal ablation harness + AI-drafted starter manifest (Phase A)
-- earlier: FastAPI demo, model_versions fix, combined venv, real Ollama judge, T2/T3/T4.
+- earlier: T6 harness (Phase A), FastAPI demo, model_versions fix, combined venv, real Ollama judge, T2/T3/T4.
 
 ## Environments (CRITICAL)
 Windows torch is blocked (WDAC). Real ML runs only in WSL.

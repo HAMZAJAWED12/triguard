@@ -466,8 +466,9 @@ Three eval-only utilities (no model/schema/pipeline change):
 - `run_t8.py` — p50/p95 + cold-start latency + peak RSS (`psutil`) over the T6 set; run
   once per backend config to compare mock vs real.
 
-Result (real, T6 n=18): T7 grounding rule 1.0 / **ollama 1.0** (18/18 rationales cite
-real evidence, 0 invented modalities — the LLM judge is well grounded). T8 real
+Result (real, T6 n=18): T7 grounding **ollama 1.0 measured** (18/18 rationales cite
+real evidence, 0 invented modalities — the LLM judge is well grounded; the rule
+judge grounds ~1.0 by construction and was not separately measured). T8 real
 (hf+blip+real-audio, rule judge): p50 31.1 ms, p95 4075 ms, cold-start 4075 ms, peak RSS
 2.87 GB — vs mock p50 0.0 ms / 34.5 MB. `psutil` pinned in `[eval]`.
 

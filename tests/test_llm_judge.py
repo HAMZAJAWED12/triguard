@@ -1,3 +1,5 @@
+import pytest
+
 from triguard.models import llm_judge
 from triguard.orchestrator.schemas import (
     AudioEvidence,
@@ -58,11 +60,14 @@ def test_rule_judge_borderline_when_only_one_modality_flagged() -> None:
     assert out.risk_label in {"borderline", "harmful"}
 
 
-def test_ollama_unavailable_falls_back_to_rule() -> None:
+def test_ollama_unavailable_falls_back_to_rule(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """When Ollama is not running, the judge must not crash; it should fall
     back to the rule-based path and tag the uncertainty."""
     # this points at a closed port so urlopen will fail fast
-    import os
-    os.environ["OLLAMA_HOST"] = "http://127.0.0.1:1"
+    monkeypatch.setenv("OLLAMA_HOST", "http://127.0.0.1:1")
+    monkeypatch.setenv("NO_PROXY", "127.0.0.1,localhost")  # defeat sys proxy
+    monkeypatch.setenv("no_proxy", "127.0.0.1,localhost")
     out = llm_judge.judge(_benign(), force_mode="ollama")
     assert any("ollama_unavailable" in u for u in out.uncertainties)

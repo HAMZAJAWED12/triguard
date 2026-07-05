@@ -454,8 +454,9 @@
 - D-024: Phase-C eval utilities (failure analysis + T7 grounding + T8 perf).
 
 ### Tests/evidence produced
-- Fast suite 29 passed / 10 skipped. Real (T6 n=18): T7 grounding rule 1.0, ollama
-  1.0 (0 invented modalities); T8 real p50 31.1 ms / p95 4075 ms / cold-start 4075 ms
+- Fast suite 29 passed / 10 skipped. Real (T6 n=18): T7 grounding ollama 1.0
+  measured (0 invented modalities; rule ~1.0 by construction, not separately
+  measured); T8 real p50 31.1 ms / p95 4075 ms / cold-start 4075 ms
   / peak RSS 2.87 GB (mock p50 0.0 ms / RSS 34.5 MB); failure_analysis 10 failures.
 
 ### Next steps
