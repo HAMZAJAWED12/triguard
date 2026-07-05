@@ -17,7 +17,7 @@ import json
 import os
 import urllib.error
 import urllib.request
-from typing import Optional, cast
+from typing import Iterator, Optional, cast
 
 from pydantic import ValidationError
 
@@ -245,6 +245,82 @@ def _ollama_generate(prompt: str) -> str:
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         data = json.loads(resp.read().decode("utf-8"))
     return data.get("response", "")
+
+
+def _ollama_generate_stream(prompt: str) -> Iterator[str]:
+    """Yield response-text fragments from a streaming /api/generate call.
+
+    Additive counterpart to `_ollama_generate` — same body except
+    ``"stream": True``. Ollama replies with NDJSON chunks
+    ``{"response": "<fragment>", "done": bool}``; the final chunk has
+    ``done: true``. The urlopen timeout is an inactivity timeout, so in
+    streaming mode it applies per read (per token gap).
+    """
+    body = json.dumps(
+        {"model": _ollama_model(), "prompt": prompt, "stream": True,
+         "options": {"temperature": 0.0}}
+    ).encode("utf-8")
+    req = urllib.request.Request(
+        f"{_ollama_host()}/api/generate",
+        data=body,
+        headers={"Content-Type": "application/json"},
+    )
+    timeout = float(os.getenv("OLLAMA_TIMEOUT", "60"))
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        for line in resp:
+            if not line.strip():
+                continue
+            chunk = json.loads(line.decode("utf-8"))
+            fragment = chunk.get("response", "")
+            if fragment:
+                yield fragment
+            if chunk.get("done"):
+                break
+
+
+def judge_stream(input_: JudgeInput) -> Iterator[dict]:
+    """Stream the Ollama judge: token events, then exactly one terminal event.
+
+    Yields dicts:
+      ``{"type": "token", "text": "<fragment>"}``   — zero or more;
+      ``{"type": "final", "source": "ollama" | "rule_fallback",
+         "judge_output": <JudgeOutput as dict>}``   — always last.
+
+    The token stream is presentation-only; the authoritative decision is the
+    terminal event's schema-validated JudgeOutput. On any failure
+    (unreachable, timeout mid-stream, invalid JSON) it degrades to the rule
+    judge with the same uncertainty tags as `judge()` — so downstream
+    labelling ("ollama" vs "ollama->rule") stays consistent. Unlike
+    `_judge_via_ollama` there is no stricter-prompt retry: a parse failure
+    goes straight to the rule fallback. `judge()` and its default path are
+    untouched.
+    """
+    evidence_block = _build_evidence_block(input_)
+    prompt = JUDGE_PROMPT_TEMPLATE.format(evidence_block=evidence_block)
+
+    parts: list[str] = []
+    fallback_tag: Optional[str] = None
+    try:
+        for fragment in _ollama_generate_stream(prompt):
+            parts.append(fragment)
+            yield {"type": "token", "text": fragment}
+    except urllib.error.URLError as e:
+        fallback_tag = f"ollama_unavailable:{e.reason}"
+    except Exception as e:  # timeout mid-stream / bad chunk — never crash
+        fallback_tag = f"ollama_unavailable:{type(e).__name__}"
+
+    if fallback_tag is None:
+        try:
+            out = _parse_judge_output("".join(parts))
+            yield {"type": "final", "source": "ollama",
+                   "judge_output": out.model_dump()}
+            return
+        except (ValidationError, json.JSONDecodeError):
+            fallback_tag = "judge_output_invalid"
+
+    out = _rule_based_judge(input_, extra_uncertainties=[fallback_tag])
+    yield {"type": "final", "source": "rule_fallback",
+           "judge_output": out.model_dump()}
 
 
 def _parse_judge_output(text: str) -> JudgeOutput:

@@ -546,3 +546,86 @@ Result (real, T6 set n=18):
    evidence, 0 invented modalities) — the LLM judge is well grounded.
  - T8: mock p50 0.0 ms / peak RSS 34.5 MB; real (hf+blip+real-audio, rule judge) p50
    31.1 ms / p95 4075 ms / cold-start 4075 ms / peak RSS 2.87 GB.
+
+## Decision 025: Phase D demo surface — presets, rule-vs-llama3 compare, streaming judge, eval dashboard
+Date: 2026-07-05
+Status: accepted
+
+Context: Roadmap Phase D ("demo wow"). The FastAPI demo could only run one
+pipeline pass and return one JSON blob; the committed eval numbers (T2–T8) had
+no visual surface; the llama3 judge's multi-second latency looked like a hang.
+Demo layer only — no wrapper, orchestrator-contract or public-schema change.
+Options considered: (a) client-side-only presets (synthesised File objects) —
+rejected: temp-file suffix handling loses the filename the mock cues key on;
+(b) run the pipeline twice for the comparison — rejected: re-runs perception,
+doubling BLIP/Whisper cost; (c) chart numbers hardcoded into the dashboard —
+rejected: violates the honesty rule (numbers must live in results.json only).
+Decision: Four additive features:
+ - **Presets**: `GET /presets` + `POST /analyse/preset` run a WHITELISTED
+   committed sample (`sample_safe/borderline/harmful.json` mock-cue presets +
+   `sample_multimodal_real.json` real committed media). The whitelist is the
+   only server-side path mapping — nothing under `data/t3_samples/` (untracked
+   third-party memes) is ever exposed.
+ - **Compare**: `POST /analyse/compare` runs perception ONCE
+   (`run(judge_mode="rule")`), rebuilds the JudgeInput from the returned
+   evidence, then calls the ollama judge on the identical input. The fallback
+   labelling logic is promoted to a public `pipeline.judge_label()` (used by
+   `run()` too), so an offline llama3 column is honestly labelled
+   `ollama->rule`, never presented as LLM output.
+ - **Streaming**: additive `llm_judge.judge_stream()` generator +
+   `_ollama_generate_stream` (same request body as `_ollama_generate` but
+   `stream:true`, NDJSON parsed line-by-line). Token events are
+   presentation-only; the terminal event carries the schema-validated
+   JudgeOutput with `source: ollama | rule_fallback` using the SAME fallback
+   uncertainty tags as `judge()`. No stricter-prompt retry on the streaming
+   path (parse failure -> rule fallback directly; documented divergence).
+   `POST /analyse/stream` serves it as SSE; perception + temp-file cleanup
+   complete BEFORE streaming starts, so client disconnects cannot leak temp
+   files. The UI renders streamed tokens via `textContent` (no HTML sink) and
+   visibly annotates a fallback so a streamed draft is never mistaken for the
+   verdict.
+ - **Dashboard**: `GET /dashboard` (self-contained page, hand-rolled div/CSS
+   bars, no CDN) + `GET /eval/summary`, which scans
+   `outputs/evaluation/<ts>/t*/results.json` and copies a per-track WHITELIST
+   of keys VERBATIM — nothing computed, nothing invented. T2 is kept per
+   backend (sklearn baseline vs hf) and T8 per config (mock vs real, split on
+   `config.mock`); every entry names its source file, and limitations /
+   provenance strings (incl. the T6 AI-DRAFTED-manifest warning) ride along
+   and are rendered next to the numbers. Missing `outputs/` degrades to
+   `{available:false}`, never a 500.
+Reason: the demo must showcase the real system without compromising the
+project's honesty stance: perception-once keeps compare latency truthful, the
+streaming protocol keeps the JudgeOutput contract authoritative, and the
+dashboard is a read-only lens over committed evidence.
+Impact: `llm_judge.py` (+`judge_stream`/`_ollama_generate_stream`),
+`pipeline.py` (+public `judge_label`, behaviour unchanged), `api/main.py`
+(6 new endpoints), `static/index.html` (presets, judge-mode selector,
+two-column compare, SSE consumer), new `static/dashboard.html`; tests
+`tests/test_llm_judge_stream.py` (4 offline unit tests) +
+`tests/test_api_phase_d.py` (9 fast offline + 1 slow real-ollama). Fast suite:
+WSL 45 passed / 10 skipped (was 32/9); Windows offline venv 33 passed / 11
+skipped (was 29/10; the new API file importorskip-skips). Schemas, wrappers,
+judge contract and offline defaults untouched.
+Post-review hardening (multi-agent adversarial review of the diff; 8 confirmed
+findings, all fixed): `_gather_inputs` no longer leaks the first temp file
+when saving the second upload fails (regression vs HEAD, reproduced live);
+API test files also `importorskip` python-multipart (fastapi ERRORs, not
+skips, without it); the UI locks preset buttons during any in-flight request
+(a mid-stream preset click corrupted the output area); the dashboard prints
+results.json values VERBATIM (no `toFixed` rounding), renders each run's
+`config` line (so a mock re-run can never be mistaken for a real one) and the
+T2 limitations, drops the hardcoded `+` on the OCR delta, and its
+missing-results message no longer prints the HTTP status as the reason;
+`/eval/summary` labels a T8 run with no boolean `config.mock` as `unknown`
+rather than defaulting to `real`, and its `source` string no longer claims
+git-committed status (it reads what is on disk). Two new regression tests
+(temp-file cleanup; tokens-then-death mid-stream fallback) + NO_PROXY guards
+keep the closed-port fallback tests offline under system proxies.
+Result (verified live, WSL `~/.venv-tri`, mock perception, warm llama3): the
+offline smoke shows every endpoint degrading honestly (`ollama->rule`,
+`rule_fallback`); the real smoke streamed 98 token events ending in a
+schema-valid `source:"ollama"` verdict (borderline/review, risk 0.55, grounded
+rationale citing the 0.45 toxicity), and compare returned rule 0 ms vs llama3
+5451 ms on the same evidence. `--run-slow` on the two Phase D test files with
+Ollama up: 12 passed. `/eval/summary` spot-check equals the committed files
+(t2 0.542/0.928; t8 34.5/2873.7 MB) — asserted by test, not transcribed.

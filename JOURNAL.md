@@ -461,3 +461,59 @@
 ### Next steps
 - Roadmap Phase D (demo wow) + Phase E (report integration). Optional: LLM-judge
   bias audit (Zheng).
+
+---
+
+## Week 18 — Demo surface: presets, compare, streaming judge, dashboard (roadmap Phase D)
+### Planned work
+- Make the demo showcase the real system: one-click presets, a rule-vs-llama3
+  side-by-side, live llama3 token streaming, and charts of the committed eval
+  numbers — without touching schemas, wrappers or offline defaults.
+
+### Completed work
+- `llm_judge.py` — additive `judge_stream()` + `_ollama_generate_stream`
+  (NDJSON, `stream:true`); token events presentation-only, terminal event =
+  schema-validated JudgeOutput with the same fallback tags as `judge()`.
+- `pipeline.py` — fallback labelling promoted to public `judge_label()`
+  (behaviour identical; `run()` now calls it).
+- `api/main.py` — `GET /presets`, `POST /analyse/preset` (whitelisted committed
+  samples only), `POST /analyse/compare` (perception once, judged twice),
+  `POST /analyse/stream` (SSE), `GET /eval/summary` (verbatim whitelist copy of
+  the latest committed results.json per track), `GET /dashboard`.
+- `static/index.html` — preset buttons, judge-mode selector, two-column compare
+  with honest `ollama->rule` warning, SSE consumer (tokens via `textContent`),
+  dashboard link. New self-contained `static/dashboard.html` (no CDN) rendering
+  T2/T3/T4/T6/T7/T8 with each run's limitations + the T6 provenance warning.
+- Tests: `test_llm_judge_stream.py` (3 offline) + `test_api_phase_d.py`
+  (8 fast offline incl. a closed-port fallback path and an eval-summary
+  equals-the-committed-file check; 1 slow real-ollama test).
+
+### Problems encountered
+- Dashboard bars rendered empty: the fill `<span>` was inline so `width` was
+  ignored — fixed with `display:block` (caught by browser preview, not tests).
+- PowerShell quoting mangled a long inline WSL smoke command — moved smokes
+  into script files.
+- A multi-agent adversarial review of the diff confirmed 8 defects (all
+  fixed): a temp-file-leak regression in `_gather_inputs`, missing
+  python-multipart importorskip (tests ERROR not skip on lean venvs), preset
+  buttons clickable mid-stream (UI corruption), dashboard `toFixed` rounding +
+  hardcoded `+` sign + dropped T2 limitations + invisible run config (a mock
+  re-run could have charted as real) + an error message printing the HTTP
+  status, and a T8 `config.mock`-absent run defaulting to the `real` label.
+
+### Decisions made
+- D-025: Phase D demo surface (presets whitelist, perception-once compare,
+  additive streaming judge, read-verbatim dashboard).
+
+### Tests/evidence produced
+- Fast suite: WSL 45 passed / 10 skipped; Windows offline venv 33 passed / 11
+  skipped. Live smoke (mock perception, warm llama3): stream produced 98 token
+  events + a schema-valid `source:"ollama"` verdict; compare rule 0 ms vs
+  llama3 5451 ms on identical evidence; offline smoke shows `ollama->rule`
+  fallback on every llama3 surface. `--run-slow` on the Phase D files with
+  Ollama up: 12 passed. Dashboard render verified in a real browser
+  (verbatim values, config lines, limitations, provenance warning).
+
+### Next steps
+- Phase E — report integration (tables/figures from committed numbers;
+  prose + T6 confounder set remain the student's own work).

@@ -18,9 +18,11 @@
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
       font-size:16px; line-height:1.5;
     }
-    .wrap{max-width:760px; margin:0 auto; padding:24px 16px 64px}
+    .wrap{max-width:960px; margin:0 auto; padding:24px 16px 64px}
     h1{font-size:1.6rem; margin:0 0 4px}
-    p.sub{color:var(--muted); margin:0 0 24px}
+    p.sub{color:var(--muted); margin:0 0 16px}
+    nav.top{margin:0 0 16px}
+    nav.top a{color:var(--accent); font-weight:600}
     form{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:20px}
     label{display:block; font-weight:600; margin:14px 0 6px}
     textarea,input[type=file]{
@@ -35,6 +37,15 @@
     }
     button:disabled{opacity:.6; cursor:progress}
     button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid #0b3d91; outline-offset:2px}
+    .presets{margin:0 0 16px}
+    .presets h2{font-size:1rem; margin:0 0 8px}
+    .presets button{
+      margin:0 8px 8px 0; padding:8px 14px; font-weight:600;
+      background:#fff; color:var(--accent); border:1px solid var(--accent);
+    }
+    fieldset.mode{border:1px solid var(--line); border-radius:6px; margin:14px 0 0; padding:10px 12px}
+    fieldset.mode legend{font-weight:600; padding:0 6px}
+    fieldset.mode label{display:inline-block; font-weight:400; margin:0 16px 0 4px}
     .result{margin-top:24px}
     .badge{display:inline-block; font-weight:700; padding:6px 12px; border-radius:6px; font-size:1.05rem}
     .safe{background:var(--safe-bg); color:var(--safe-fg)}
@@ -48,6 +59,14 @@
     .rationale{font-size:1.05rem; margin:12px 0}
     .muted{color:var(--muted)}
     .err{background:var(--harm-bg); color:var(--harm-fg); padding:12px; border-radius:6px; margin-top:16px}
+    .warn{background:var(--border-bg); color:var(--border-fg); padding:12px; border-radius:6px; margin-top:12px}
+    .cols{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+    @media (max-width:720px){ .cols{grid-template-columns:1fr} }
+    .tokens{
+      font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.95em;
+      background:#fff; border:1px dashed var(--line); border-radius:6px;
+      padding:10px; margin-top:8px; white-space:pre-wrap; min-height:2.5em;
+    }
     code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.9em}
   </style>
 </head>
@@ -56,6 +75,12 @@
     <h1>TriGuard — content review demo</h1>
     <p class="sub">Submit text, an image and/or an audio clip. TriGuard returns a
       <strong>recommended</strong> decision for a human reviewer — it does not moderate automatically.</p>
+    <nav class="top"><a href="/dashboard">Evaluation dashboard →</a></nav>
+
+    <section class="presets" id="presets" hidden>
+      <h2>Presets (committed sample inputs)</h2>
+      <div id="presetBtns"></div>
+    </section>
 
     <form id="f" aria-describedby="hint">
       <label for="text">Text</label>
@@ -67,7 +92,18 @@
       <label for="audio">Audio (optional)</label>
       <input type="file" id="audio" name="audio" accept="audio/*">
 
-      <p id="hint" class="muted">At least one field is required.</p>
+      <fieldset class="mode">
+        <legend>Judge mode</legend>
+        <input type="radio" name="mode" id="m-single" value="single" checked>
+        <label for="m-single">Single verdict (default judge)</label>
+        <input type="radio" name="mode" id="m-compare" value="compare">
+        <label for="m-compare">Compare rule vs llama3</label>
+        <input type="radio" name="mode" id="m-stream" value="stream">
+        <label for="m-stream">Stream llama3</label>
+      </fieldset>
+
+      <p id="hint" class="muted">At least one field is required. Compare/stream need a
+        running Ollama server; without one they honestly fall back to the rule judge.</p>
       <button type="submit" id="go">Analyse</button>
     </form>
 
@@ -81,54 +117,188 @@
 
     function esc(s){ return String(s==null?'':s).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 
+    // One request at a time: lock the submit button AND every preset button,
+    // so a preset click can't corrupt an in-flight stream's output.
+    function setBusy(b){
+      go.disabled = b;
+      document.querySelectorAll('#presetBtns button').forEach(x => { x.disabled = b; });
+    }
+
     function evidenceCard(title, rows){
       const dl = rows.map(([k,v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
       return `<div class="card"><h3>${esc(title)}</h3><dl>${dl}</dl></div>`;
     }
 
-    function render(r){
-      const label = r.risk_label || 'unknown';
-      let html = `<span class="badge ${esc(label)}">${esc(label.toUpperCase())}</span>`;
-      html += ` &nbsp; recommended action: <strong>${esc(r.recommended_action)}</strong>`;
-      html += `<p class="rationale">${esc(r.rationale)}</p>`;
-      if (r.uncertainties && r.uncertainties.length)
-        html += `<p class="muted">Uncertainties: ${esc(r.uncertainties.join('; '))}</p>`;
-
-      if (r.text_evidence){
-        const t = r.text_evidence;
+    function evidenceCards(textEv, imageEv, audioEv){
+      let html = '';
+      if (textEv){
         html += evidenceCard('Text', [
-          ['toxicity', Number(t.toxicity_score).toFixed(3)],
-          ['labels', (t.top_labels||[]).join(', ') || '—'],
-          ['confidence', Number(t.confidence).toFixed(3)],
+          ['toxicity', Number(textEv.toxicity_score).toFixed(3)],
+          ['labels', (textEv.top_labels||[]).join(', ') || '—'],
+          ['confidence', Number(textEv.confidence).toFixed(3)],
         ]);
       }
-      if (r.image_evidence){
-        const i = r.image_evidence;
+      if (imageEv){
         html += evidenceCard('Image', [
-          ['caption', i.caption],
-          ['risk cues', (i.visual_risk_cues||[]).join(', ') || '—'],
-          ['confidence', Number(i.confidence).toFixed(3)],
+          ['caption', imageEv.caption],
+          ['risk cues', (imageEv.visual_risk_cues||[]).join(', ') || '—'],
+          ['confidence', Number(imageEv.confidence).toFixed(3)],
         ]);
       }
-      if (r.audio_evidence){
-        const a = r.audio_evidence;
-        const tags = (a.yamnet_tags||[]).map(x=>Array.isArray(x)?x[0]:x).join(', ') || '—';
+      if (audioEv){
+        const tags = (audioEv.yamnet_tags||[]).map(x=>Array.isArray(x)?x[0]:x).join(', ') || '—';
         html += evidenceCard('Audio', [
-          ['transcript', a.transcript],
+          ['transcript', audioEv.transcript],
           ['tags', tags],
-          ['confidence', Number(a.transcript_confidence).toFixed(3)],
+          ['confidence', Number(audioEv.transcript_confidence).toFixed(3)],
         ]);
       }
+      return html;
+    }
+
+    function verdictHtml(o){
+      const label = o.risk_label || 'unknown';
+      let html = `<span class="badge ${esc(label)}">${esc(label.toUpperCase())}</span>`;
+      html += ` &nbsp; recommended action: <strong>${esc(o.recommended_action)}</strong>`;
+      html += `<p class="rationale">${esc(o.rationale)}</p>`;
+      if (o.uncertainties && o.uncertainties.length)
+        html += `<p class="muted">Uncertainties: ${esc(o.uncertainties.join('; '))}</p>`;
+      html += `<p class="muted">risk score: ${esc(Number(o.risk_score).toFixed(3))}</p>`;
+      return html;
+    }
+
+    function render(r){
+      let html = verdictHtml(r);
+      html += evidenceCards(r.text_evidence, r.image_evidence, r.audio_evidence);
       const mv = r.model_versions || {};
       html += evidenceCard('Models used', Object.keys(mv).map(k=>[k, mv[k]]));
-      html += `<p class="muted">risk score: ${esc(Number(r.risk_score).toFixed(3))} · latency: ${esc(r.latency_ms)} ms</p>`;
+      html += `<p class="muted">latency: ${esc(r.latency_ms)} ms</p>`;
       out.innerHTML = html;
     }
 
+    function renderCompare(c){
+      let html = '<div class="cols">';
+      html += `<div class="card"><h3>Rule judge (${esc(c.rule.latency_ms)} ms, incl. perception)</h3>`
+            + verdictHtml(c.rule.output) + '</div>';
+      const oLabel = c.ollama.judge_label;
+      html += `<div class="card"><h3>llama3 judge — <code>${esc(oLabel)}</code> (${esc(c.ollama.latency_ms)} ms)</h3>`;
+      if (oLabel !== 'ollama')
+        html += `<p class="warn">Ollama was unavailable or returned invalid JSON — this column is the
+                 rule judge acting as fallback, honestly labelled <code>ollama-&gt;rule</code>.</p>`;
+      html += verdictHtml(c.ollama.output) + '</div>';
+      html += '</div>';
+      html += `<p class="muted">${esc(c.note)}</p>`;
+      html += evidenceCards(c.evidence.text, c.evidence.image, c.evidence.audio);
+      const pv = c.perception_model_versions || {};
+      html += evidenceCard('Models used (perception)', Object.keys(pv).map(k=>[k, pv[k]]));
+      out.innerHTML = html;
+    }
+
+    async function runStream(fd){
+      out.innerHTML = '<p class="muted">Running perception…</p>';
+      const res = await fetch('/analyse/stream', { method:'POST', body: fd });
+      if (!res.ok) {
+        let detail = res.status;
+        try { detail = (await res.json()).detail || detail; } catch (_) {}
+        out.innerHTML = `<p class="err">${esc(detail)}</p>`;
+        return;
+      }
+      out.innerHTML = '';
+      const shell = document.createElement('div');
+      out.appendChild(shell);
+      const llamaCard = document.createElement('div');
+      llamaCard.className = 'card';
+      llamaCard.innerHTML = '<h3>llama3 judge (streaming)</h3>';
+      const tokenBox = document.createElement('div');
+      tokenBox.className = 'tokens';
+      llamaCard.appendChild(tokenBox);
+      const finalBox = document.createElement('div');
+      llamaCard.appendChild(finalBox);
+
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      while (true) {
+        const {value, done} = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, {stream:true});
+        let idx;
+        while ((idx = buf.indexOf('\n\n')) >= 0) {
+          const raw = buf.slice(0, idx); buf = buf.slice(idx + 2);
+          if (!raw.startsWith('data: ')) continue;
+          const ev = JSON.parse(raw.slice(6));
+          if (ev.type === 'evidence') {
+            let html = `<div class="card"><h3>Rule judge (instant, ${esc(ev.rule.latency_ms)} ms incl. perception)</h3>`
+                     + verdictHtml(ev.rule.output) + '</div>';
+            html += evidenceCards(ev.evidence.text, ev.evidence.image, ev.evidence.audio);
+            const pv = ev.perception_model_versions || {};
+            html += evidenceCard('Models used (perception)', Object.keys(pv).map(k=>[k, pv[k]]));
+            shell.innerHTML = html;
+            out.appendChild(llamaCard);
+          } else if (ev.type === 'token') {
+            tokenBox.appendChild(document.createTextNode(ev.text));  // textContent path — no HTML injection
+          } else if (ev.type === 'final') {
+            let html = '';
+            if (ev.source !== 'ollama')
+              html += `<p class="warn">llama3 did not produce a valid verdict — the decision below is the
+                       rule judge acting as fallback (<code>ollama-&gt;rule</code>). Any streamed draft
+                       above is NOT the final verdict.</p>`;
+            else
+              html += `<p class="muted">Final schema-validated verdict (judge label
+                       <code>${esc(ev.judge_label)}</code>):</p>`;
+            html += verdictHtml(ev.judge_output);
+            finalBox.innerHTML = html;
+          }
+        }
+      }
+    }
+
+    async function loadPresets(){
+      try {
+        const res = await fetch('/presets');
+        if (!res.ok) return;
+        const data = await res.json();
+        const box = document.getElementById('presetBtns');
+        (data.presets || []).forEach(p => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = p.title;
+          b.title = p.description;
+          b.addEventListener('click', async () => {
+            if (go.disabled) return;  // a request is already in flight
+            out.innerHTML = '<p class="muted">Running preset…</p>';
+            setBusy(true);
+            try {
+              const res = await fetch('/analyse/preset', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: p.name}),
+              });
+              const data = await res.json();
+              if (!res.ok) { out.innerHTML = `<p class="err">${esc(data.detail || res.status)}</p>`; return; }
+              render(data.result);
+              const note = document.createElement('p');
+              note.className = 'muted';
+              note.textContent = 'Preset "' + p.title + '" — inputs: ' + JSON.stringify(data.inputs);
+              out.prepend(note);
+            } catch (err) {
+              out.innerHTML = `<p class="err">Request failed: ${esc(err.message)}</p>`;
+            } finally {
+              setBusy(false);
+            }
+          });
+          box.appendChild(b);
+        });
+        if ((data.presets || []).length) document.getElementById('presets').hidden = false;
+      } catch (_) { /* presets are optional decoration */ }
+    }
+    loadPresets();
+
     f.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (go.disabled) return;  // a request is already in flight
       out.innerHTML = '<p class="muted">Analysing…</p>';
-      go.disabled = true;
+      setBusy(true);
       try {
         const fd = new FormData();
         const text = document.getElementById('text').value.trim();
@@ -137,14 +307,17 @@
         if (text) fd.append('text', text);
         if (img) fd.append('image', img);
         if (aud) fd.append('audio', aud);
-        const res = await fetch('/analyse/multimodal', { method:'POST', body: fd });
+        const mode = (document.querySelector('input[name=mode]:checked') || {}).value || 'single';
+        if (mode === 'stream') { await runStream(fd); return; }
+        const url = mode === 'compare' ? '/analyse/compare' : '/analyse/multimodal';
+        const res = await fetch(url, { method:'POST', body: fd });
         const data = await res.json();
         if (!res.ok) { out.innerHTML = `<p class="err">${esc(data.detail || res.status)}</p>`; return; }
-        render(data);
+        if (mode === 'compare') renderCompare(data); else render(data);
       } catch (err) {
         out.innerHTML = `<p class="err">Request failed: ${esc(err.message)}</p>`;
       } finally {
-        go.disabled = false;
+        setBusy(false);
       }
     });
   </script>

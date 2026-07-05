@@ -1,7 +1,7 @@
 # Session Handoff — TriGuard
 
-Read this FIRST in a new session, plus `CLAUDE.md`, `DECISIONS.md` (D-001..D-024),
-`JOURNAL.md` (Wk1..17), `docs/implementation_notes.md`. This captures the current
+Read this FIRST in a new session, plus `CLAUDE.md`, `DECISIONS.md` (D-001..D-025),
+`JOURNAL.md` (Wk1..18), `docs/implementation_notes.md`. This captures the current
 state + the non-obvious environment so work resumes without re-discovery.
 
 ## Location (CHANGED — off OneDrive)
@@ -35,11 +35,11 @@ Windows torch is blocked (WDAC). Real ML runs only in WSL.
 
 ## Test commands
 ```powershell
-# Windows offline (from any dir): 29 passed / 10 skipped
+# Windows offline (from any dir): 33 passed / 11 skipped
 $env:PYTHONPATH="C:\dev\triguard\src"; & "C:\Users\jawed\OneDrive\ICAEWSOFTWARE\FYP UOL\triguard\.venv\Scripts\python.exe" -m pytest -q C:\dev\triguard\tests
 ```
 ```bash
-# WSL real, fast lane
+# WSL real, fast lane: 45 passed / 10 skipped
 wsl -e bash -lc "cd /mnt/c/dev/triguard && PYTHONPATH=src ~/.venv-tri/bin/python -m pytest -q"
 # WSL with slow tests (hf/blip/audio/ocr/ollama; needs models/server)
 wsl -e bash -lc "cd /mnt/c/dev/triguard && USE_TF=0 PYTHONPATH=src ~/.venv-tri/bin/python -m pytest -q --run-slow"
@@ -51,7 +51,10 @@ Full command reference (server run, CLI, evals, ollama): **`study/TriGuard_Comma
 ## What is real + done
 Text (toxic-bert), image (BLIP), audio (Whisper+YAMNet), rule + real llama3 judge, one
 combined `~/.venv-tri` runs all in one pass. FastAPI demo (`triguard.api.main:app`,
-`/`, `/ui`, `/analyse/text`, `/analyse/multimodal`). Evals T1–T4, T6 ablation, T7
+`/`, `/ui`, `/analyse/text`, `/analyse/multimodal`) + Phase D demo surface (D-025):
+`/presets`, `/analyse/preset`, `/analyse/compare` (perception once, rule vs llama3),
+`/analyse/stream` (SSE llama3 tokens + validated final), `/eval/summary` +
+`/dashboard` (committed numbers, verbatim). Evals T1–T4, T6 ablation, T7
 grounding, T8 perf, failure_analysis. model_versions reflects the real backend.
 
 ## Verified numbers (committed under `outputs/evaluation/`; never invent, never edit)
@@ -65,8 +68,9 @@ grounding, T8 perf, failure_analysis. model_versions reflects the real backend.
 - T8: real p50 31 ms / p95 4.1 s / cold-start 4.1 s / peak RSS 2.87 GB; mock 0.0 ms / 34.5 MB.
 
 ## Roadmap remaining (see `~/.claude/plans/how-we-can-improve-*.md`)
-- **Phase D** — demo wow (live cross-modal preset, side-by-side rule-vs-llama3,
-  streaming llama3, `/dashboard` charts). Not started.
+- **Phase D** — demo wow: DONE (D-025, Wk18) — presets, rule-vs-llama3 compare,
+  streaming llama3, `/dashboard`. Verified live (98 streamed tokens, honest
+  `ollama->rule` fallback offline).
 - **Phase E** — report integration. **The report prose + the T6 cross-modal confounder
   set/labels are the STUDENT's own work** (assistant supplies tables/figures + verifies
   numbers only).
@@ -83,3 +87,16 @@ Plan-first then wait "approved"; STOP before commit (user commits, or authorises
 never invent numbers/citations; `py_compile` after every `.py` write; lazy-import heavy
 ML; keep mock + rule-judge fallbacks + offline defaults; don't change the public Pydantic
 schema; caveman reply style (skill `anthropic-skills:caveman`).
+
+## Immediate next action
+Final report (Phase E). Get the CM3070 final-report spec (required sections + word count),
+build a skeleton mapped to the verified numbers above; the student writes the prose. The
+assistant needs `C:\dev\triguard` connected to read files + verify numbers.
+
+## Kickoff prompt for a new session (paste this)
+> Continuing my CM3070 TriGuard final project. Connect C:\dev\triguard. Read
+> docs/SESSION_HANDOFF.md first, then CLAUDE.md, DECISIONS.md, JOURNAL.md,
+> docs/implementation_notes.md. Build phase is complete; we're on the final report
+> (Phase E). I use Claude Code for building (plan-first, ONE sprint, STOP before commit)
+> and this chat for review + report assembly. Terse/caveman style. Confirm you're up to
+> speed, then I'll paste the CM3070 final-report spec.

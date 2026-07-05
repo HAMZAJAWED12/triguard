@@ -475,3 +475,72 @@ Caveats: T7 `grounding_rate` is a **floor** metric — it counts a rationale as 
 if it cites >=1 evidence token; it does not measure explanation completeness or quality,
 and n=18. T8's 31 ms p50 is **perception + the rule judge**; the ollama/llama3 judge adds
 ~seconds per item (see D-015 cold-load), so an LLM-judged pipeline is far slower.
+
+### Phase D — demo surface: presets, compare, streaming judge, dashboard
+
+Demo layer only (D-025): no wrapper, orchestrator-contract or public-schema
+change. New endpoints in `src/triguard/api/main.py`:
+
+| method + path | purpose |
+|---|---|
+| `GET /presets` | whitelisted committed sample presets |
+| `POST /analyse/preset` | `{name}` -> run one whitelisted sample through the pipeline |
+| `POST /analyse/compare` | multipart form -> perception ONCE, judged by rule AND ollama |
+| `POST /analyse/stream` | multipart form -> SSE: evidence + instant rule verdict, llama3 tokens, final validated verdict |
+| `GET /eval/summary` | latest committed results.json per track, whitelist-copied VERBATIM |
+| `GET /dashboard` | self-contained charts page (`static/dashboard.html`, no CDN) |
+
+Key mechanics:
+
+- **Presets** map ONLY to the four committed sample JSONs
+  (`sample_safe/borderline/harmful.json` = mock-cue placeholder paths;
+  `sample_multimodal_real.json` = real committed media). Relative paths resolve
+  against the repo root; missing placeholder paths degrade to the mock wrappers
+  (honest via `model_versions`). Nothing under `data/t3_samples/` is exposed.
+- **Compare** calls `run(..., judge_mode="rule")`, rebuilds `JudgeInput` from
+  the returned evidence and calls `llm_judge.judge(ji, force_mode="ollama")` —
+  perception never runs twice. The fallback label comes from the new public
+  `pipeline.judge_label(judge_mode, judge_out)` (same logic `run()` uses), so
+  an unreachable Ollama yields `"ollama->rule"`, surfaced as a warning in the UI.
+- **Streaming**: `llm_judge.judge_stream(input_)` is a generator beside
+  `judge()` — `_ollama_generate_stream` posts the identical body with
+  `"stream": true` and yields NDJSON `response` fragments. Events:
+  `{"type":"token","text":...}` (presentation-only) then exactly one
+  `{"type":"final","source":"ollama"|"rule_fallback","judge_output":...}` with
+  the SAME uncertainty tags as `judge()` (`ollama_unavailable:*` /
+  `judge_output_invalid`). No stricter-prompt retry on this path (documented
+  divergence from `_judge_via_ollama`). The API endpoint finishes perception
+  and temp-file cleanup BEFORE streaming, so disconnects cannot leak files;
+  the UI appends tokens via `textContent` (no HTML sink) and visibly replaces
+  a streamed draft on fallback.
+- **Dashboard honesty**: `/eval/summary` scans
+  `outputs/evaluation/<ts>/t*/results.json`, keeps the newest run per track
+  (T2 per backend sklearn/hf; T8 per `config.mock`), and copies a per-track
+  whitelist of keys verbatim (`_TRACK_KEYS`) — bulky per-sample arrays are
+  dropped, no value is computed or transformed. Limitations / provenance
+  strings (incl. the T6 AI-DRAFTED-manifest warning) are included and rendered
+  next to every chart. Missing `outputs/` -> `{"available": false}`, not a 500.
+
+Run (WSL, offline defaults):
+
+```bash
+PYTHONPATH=src ~/.venv-tri/bin/uvicorn triguard.api.main:app --host 127.0.0.1 --port 8001
+# /ui — presets + judge-mode selector (single / compare / stream llama3)
+# /dashboard — committed T2–T8 numbers
+```
+
+Tests: `tests/test_llm_judge_stream.py` (offline unit: unreachable-host
+fallback, monkeypatched token stream, invalid-JSON fallback) and
+`tests/test_api_phase_d.py` (fast offline: presets, compare + stream against a
+closed port for instant honest fallback, eval-summary equality against the
+committed files, dashboard page; slow: real-ollama compare with the
+reachability double-gate). Fast suite: **45 passed / 10 skipped** (WSL
+`~/.venv-tri`), **33 passed / 11 skipped** (minimal offline venv — the API
+test files importorskip-skip on fastapi/httpx/python-multipart). Verified live
+with a warm llama3: 98 streamed token events ending in a schema-valid
+`source:"ollama"` verdict; compare rule 0 ms vs llama3 5451 ms on identical
+evidence. The dashboard prints results.json values verbatim (no rounding) and
+renders each run's `config` + limitations next to its numbers; `/eval/summary`
+reads what is on disk and says so — the git-committed status of a run dir is
+not checked, so keep `outputs/evaluation/` clean and verify run ids against
+the committed evidence.

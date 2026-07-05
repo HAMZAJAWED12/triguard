@@ -10,6 +10,12 @@ import pytest
 
 pytest.importorskip("fastapi")
 pytest.importorskip("httpx")
+# fastapi's Form/File routes hard-require the python-multipart package at app
+# import; without this guard the client fixture ERRORs instead of skipping.
+try:
+    import python_multipart  # noqa: F401
+except ImportError:
+    pytest.importorskip("multipart", reason="python-multipart not installed")
 
 from fastapi.testclient import TestClient  # noqa: E402
 

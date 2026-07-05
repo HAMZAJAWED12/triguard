@@ -14,6 +14,7 @@ from .schemas import (
     AudioEvidence,
     ImageEvidence,
     JudgeInput,
+    JudgeOutput,
     TextEvidence,
     TriGuardResult,
 )
@@ -37,6 +38,22 @@ _JUDGE_FALLBACK_TAGS = ("ollama_unavailable", "judge_output_invalid")
 def backend_of_mode(mode: Optional[str]) -> str:
     """Canonical backend token for an evidence's raw['mode']."""
     return _MODE_BACKEND.get(mode or "", "unknown")
+
+
+def judge_label(judge_mode: Optional[str], judge_out: JudgeOutput) -> str:
+    """Honest label for the judge that actually answered.
+
+    Mirrors llm_judge.judge's mode resolution (arg wins, else TRIGUARD_JUDGE,
+    else rule). An ollama run that fell back to the rule judge is labelled
+    "ollama->rule" — detected via the fallback uncertainty tags.
+    """
+    effective = judge_mode or os.getenv("TRIGUARD_JUDGE", "rule")
+    if effective == "ollama":
+        fell_back = any(
+            u.startswith(_JUDGE_FALLBACK_TAGS) for u in judge_out.uncertainties
+        )
+        return "ollama->rule" if fell_back else "ollama"
+    return "rule"
 
 
 def _version(ev: Union[TextEvidence, ImageEvidence, AudioEvidence]) -> str:
@@ -121,12 +138,7 @@ def run(
     # Label from the EFFECTIVE judge (mirrors llm_judge.judge): the arg wins,
     # else TRIGUARD_JUDGE, else rule — so an env-driven ollama run is labelled
     # correctly even when the caller passes judge_mode=None (e.g. the API).
-    effective_judge = judge_mode or os.getenv("TRIGUARD_JUDGE", "rule")
-    if effective_judge == "ollama":
-        fell_back = any(u.startswith(_JUDGE_FALLBACK_TAGS) for u in judge_out.uncertainties)
-        versions["llm_judge"] = "ollama->rule" if fell_back else "ollama"
-    else:
-        versions["llm_judge"] = "rule"
+    versions["llm_judge"] = judge_label(judge_mode, judge_out)
 
     # 3. Build final result
     latency_ms = int((time.perf_counter() - started) * 1000)

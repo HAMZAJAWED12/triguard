@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TriGuard — evaluation dashboard</title>
+  <style>
+    :root{
+      --bg:#ffffff; --fg:#1a1a1a; --muted:#4a4a4a; --line:#c9c9c9;
+      --panel:#f4f4f6; --accent:#0b3d91;
+      --bar1:#0b3d91; --bar2:#5a7fc0; --bar3:#9db4d8;
+      --warn-bg:#fff4e5; --warn-fg:#7a4a02;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:var(--bg); color:var(--fg);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      font-size:16px; line-height:1.5;
+    }
+    .wrap{max-width:960px; margin:0 auto; padding:24px 16px 64px}
+    h1{font-size:1.6rem; margin:0 0 4px}
+    p.sub{color:var(--muted); margin:0 0 16px}
+    nav.top{margin:0 0 16px}
+    nav.top a{color:var(--accent); font-weight:600}
+    section.track{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px 20px; margin:0 0 20px}
+    section.track h2{font-size:1.15rem; margin:0 0 4px}
+    p.src{color:var(--muted); font-size:.85rem; margin:2px 0 10px; word-break:break-all}
+    .grp{margin:12px 0 4px; font-weight:600}
+    .row{display:grid; grid-template-columns:220px 1fr 90px; gap:8px; align-items:center; margin:4px 0}
+    .row .lbl{font-size:.95rem}
+    .row .val{text-align:right; font-variant-numeric:tabular-nums}
+    .trackbar{display:block; background:#fff; border:1px solid var(--line); border-radius:4px; height:20px; overflow:hidden}
+    .fill{display:block; height:100%; background:var(--bar1)}
+    .fill.b2{background:var(--bar2)}
+    .fill.b3{background:var(--bar3)}
+    .warn{background:var(--warn-bg); color:var(--warn-fg); padding:10px 12px; border-radius:6px; margin:10px 0; font-size:.95rem}
+    ul.lims{color:var(--muted); font-size:.9rem; margin:10px 0 0; padding-left:20px}
+    .err{background:#fdeaea; color:#8a1212; padding:12px; border-radius:6px}
+    code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.9em}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>TriGuard — evaluation dashboard</h1>
+    <p class="sub">Every number on this page is copied verbatim from an
+      <code>outputs/evaluation/&lt;run&gt;/&lt;track&gt;/results.json</code> file on this machine — nothing is
+      computed, aggregated or edited here. Each chart names its source file and run
+      configuration and shows the run's own limitations; verify the run ids against the
+      committed evidence. TriGuard <strong>supports</strong> human moderation; it does not
+      moderate automatically.</p>
+    <nav class="top"><a href="/ui">← Back to the demo</a></nav>
+    <div id="root"><p class="sub">Loading committed evaluation numbers…</p></div>
+  </main>
+
+  <script>
+    function esc(s){ return String(s==null?'':s).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+    // One horizontal bar. value/max define the fill only; the printed value is
+    // the results.json value VERBATIM (no rounding, no padding).
+    function bar(label, value, max, cls, fmt){
+      const pct = (max > 0 && value != null) ? Math.min(100, 100 * value / max) : 0;
+      const shown = (value == null) ? '—' : (fmt ? fmt(value) : String(value));
+      return `<div class="row"><span class="lbl">${esc(label)}</span>` +
+             `<span class="trackbar"><span class="fill ${cls||''}" style="width:${pct}%"></span></span>` +
+             `<span class="val">${esc(shown)}</span></div>`;
+    }
+
+    function lims(arr){
+      if (!arr || !arr.length) return '';
+      return `<ul class="lims">${arr.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`;
+    }
+
+    function srcLine(entry){
+      let h = `<p class="src">source: <code>${esc(entry.file)}</code> (run ${esc(entry.run)})</p>`;
+      const cfg = entry.data && entry.data.config;
+      if (cfg) {
+        const kv = Object.keys(cfg).map(k => `${k}=${cfg[k]}`).join(', ');
+        h += `<p class="src">config: ${esc(kv)}</p>`;
+      }
+      return h;
+    }
+
+    function sectionT2(t2){
+      const by = t2.runs_by_backend || {};
+      const sk = by.sklearn, hf = by.hf;
+      if (!sk && !hf) return '';
+      let h = '<section class="track"><h2>T2 — text track (Civil Comments)</h2>';
+      if (hf) h += srcLine(hf);
+      if (sk) h += srcLine(sk);
+      h += '<div class="grp">accuracy</div>';
+      if (sk) h += bar('sklearn TF-IDF baseline', sk.data.accuracy, 1, 'b3');
+      if (hf) h += bar('toxic-bert (hf)', hf.data.accuracy, 1);
+      h += '<div class="grp">macro-F1</div>';
+      if (sk) h += bar('sklearn TF-IDF baseline', sk.data.macro_f1, 1, 'b3');
+      if (hf) h += bar('toxic-bert (hf)', hf.data.macro_f1, 1);
+      if (hf && hf.data.per_class && hf.data.per_class.toxic)
+        h += `<p class="src">toxic class (toxic-bert): precision ${esc(hf.data.per_class.toxic.precision)},
+              recall ${esc(hf.data.per_class.toxic.recall)}, F1 ${esc(hf.data.per_class.toxic.f1)}
+              — small positive class (${esc(JSON.stringify((hf.data.class_balance||{})))}).</p>`;
+      const t2lims = [...new Set([].concat(
+        (sk && sk.data.limitations) || [], (hf && hf.data.limitations) || []))];
+      h += lims(t2lims);
+      h += '</section>';
+      return h;
+    }
+
+    function sectionT3(t3){
+      const d = t3.data;
+      let h = '<section class="track"><h2>T3 — image-text track (Memotion, flag-vs-label)</h2>' + srcLine(t3);
+      h += '<div class="grp">F1 (decision measure, not a trained-classifier F1)</div>';
+      if (d.metrics_pipeline) h += bar('pipeline (image + dataset text)', d.metrics_pipeline.f1, 1);
+      if (d.metrics_text_only_baseline) h += bar('text-only baseline', d.metrics_text_only_baseline.f1, 1, 'b2');
+      const o = d.ocr_ablation;
+      if (o) {
+        h += `<div class="grp">OCR ablation — ${esc(o.measured_on||'image track alone')}</div>`;
+        if (o.image_only_noocr) h += bar('BLIP caption only', o.image_only_noocr.f1, 1, 'b3');
+        if (o.image_only_ocr_cues) h += bar('+OCR → keyword cues', o.image_only_ocr_cues.f1, 1, 'b2');
+        if (o.image_only_ocr_to_text) h += bar('+OCR → toxic-bert text track', o.image_only_ocr_to_text.f1, 1);
+        if (o.delta_f1_ocr_to_text != null)
+          h += `<p class="src">delta F1 (OCR→text route): ${esc(o.delta_f1_ocr_to_text)}</p>`;
+        if (o.note) h += `<div class="warn">${esc(o.note)}</div>`;
+      }
+      h += lims(d.limitations) + '</section>';
+      return h;
+    }
+
+    function sectionT4(t4){
+      const d = t4.data;
+      let h = '<section class="track"><h2>T4 — audio track (public proxies)</h2>' + srcLine(t4);
+      if (d.whisper_wer) {
+        h += '<div class="grp">Whisper WER, LibriSpeech test-clean (lower is better)</div>';
+        h += bar('corpus WER', d.whisper_wer.wer_corpus, 1);
+        h += bar('mean per clip', d.whisper_wer.wer_mean_per_clip, 1, 'b2');
+      }
+      if (d.yamnet_events) {
+        h += '<div class="grp">YAMNet event tagging, ESC-50 (approximate category map)</div>';
+        h += bar('top-1 (strict lower bound)', d.yamnet_events.top1_rate, 1, 'b2');
+        h += bar('top-5 (fair headline)', d.yamnet_events.top5_rate, 1);
+      }
+      h += lims(d.limitations) + '</section>';
+      return h;
+    }
+
+    function sectionT6(t6){
+      const d = t6.data;
+      let h = '<section class="track"><h2>T6 — tri-modal ablation</h2>' + srcLine(t6);
+      if (d.manifest_provenance)
+        h += `<div class="warn">Provenance: ${esc(d.manifest_provenance)}</div>`;
+      const names = ['text_only','image_only','audio_only','multimodal'];
+      const conds = d.conditions || {};
+      h += '<div class="grp">accuracy</div>';
+      names.forEach((n,i)=>{ if (conds[n]) h += bar(n.replace('_',' '), conds[n].accuracy, 1, n==='multimodal'?'':'b2'); });
+      h += '<div class="grp">macro-F1</div>';
+      names.forEach((n,i)=>{ if (conds[n]) h += bar(n.replace('_',' '), conds[n].macro_f1, 1, n==='multimodal'?'':'b2'); });
+      const cm = d.cross_modal_ablation;
+      if (cm && cm.n_cross_modal_harmful === 0)
+        h += `<div class="warn">cross-modal confounder items: 0 — the thesis-proving confounder
+              cases and labels are the student's own work and are not yet in this set.</div>`;
+      h += lims(d.limitations) + '</section>';
+      return h;
+    }
+
+    function sectionT7(t7){
+      const d = t7.data;
+      let h = '<section class="track"><h2>T7 — rationale grounding</h2>' + srcLine(t7);
+      h += bar(`grounding rate (judge: ${d.judge||'?'}, n=${d.n||'?'})`, d.grounding_rate, 1);
+      if (d.invented_modality_count != null)
+        h += `<p class="src">invented (unsupplied) modalities cited: ${esc(d.invented_modality_count)}</p>`;
+      if (d.note) h += `<div class="warn">${esc(d.note)}</div>`;
+      h += '</section>';
+      return h;
+    }
+
+    function sectionT8(t8){
+      const by = t8.runs_by_config || {};
+      const mock = by.mock, real = by.real;
+      if (!mock && !real) return '';
+      let h = '<section class="track"><h2>T8 — latency and memory (mock vs real backends)</h2>';
+      if (real) h += srcLine(real);
+      if (mock) h += srcLine(mock);
+      const lat = e => e && e.data.latency_ms || {};
+      const maxLat = Math.max(lat(real).p95||0, lat(mock).p95||0, lat(real).cold_start_ms||0, 1);
+      h += '<div class="grp">latency (ms)</div>';
+      if (mock) {
+        h += bar('mock p50', lat(mock).p50, maxLat, 'b3', v=>v+' ms');
+        h += bar('mock p95', lat(mock).p95, maxLat, 'b3', v=>v+' ms');
+      }
+      if (real) {
+        h += bar('real p50', lat(real).p50, maxLat, 'b2', v=>v+' ms');
+        h += bar('real p95', lat(real).p95, maxLat, '', v=>v+' ms');
+        h += bar('real cold start', lat(real).cold_start_ms, maxLat, '', v=>v+' ms');
+      }
+      const maxRss = Math.max((real&&real.data.peak_rss_mb)||0, (mock&&mock.data.peak_rss_mb)||0, 1);
+      h += '<div class="grp">peak RSS (MB)</div>';
+      if (mock) h += bar('mock', mock.data.peak_rss_mb, maxRss, 'b3', v=>v+' MB');
+      if (real) h += bar('real', real.data.peak_rss_mb, maxRss, '', v=>v+' MB');
+      const note = (real && real.data.note) || (mock && mock.data.note);
+      if (note) h += `<div class="warn">${esc(note)}</div>`;
+      h += '</section>';
+      return h;
+    }
+
+    (async () => {
+      const root = document.getElementById('root');
+      try {
+        const res = await fetch('/eval/summary');
+        const data = await res.json();
+        if (!res.ok || !data.available) {
+          root.innerHTML = `<p class="err">No evaluation results found
+            (${esc(data.reason || 'no results.json files under outputs/evaluation')}).
+            Run the T2–T8 harnesses first.</p>`;
+          return;
+        }
+        const t = data.tracks || {};
+        let html = '';
+        if (t.t2) html += sectionT2(t.t2);
+        if (t.t3) html += sectionT3(t.t3);
+        if (t.t4) html += sectionT4(t.t4);
+        if (t.t6) html += sectionT6(t.t6);
+        if (t.t7) html += sectionT7(t.t7);
+        if (t.t8) html += sectionT8(t.t8);
+        root.innerHTML = html || '<p class="err">Summary loaded but no known tracks present.</p>';
+      } catch (err) {
+        root.innerHTML = `<p class="err">Failed to load /eval/summary: ${esc(err.message)}</p>`;
+      }
+    })();
+  </script>
+</body>
+</html>
