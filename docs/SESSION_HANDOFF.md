@@ -1,71 +1,85 @@
 # Session Handoff — TriGuard
 
-Read this first in a new session, plus `CLAUDE.md`, `DECISIONS.md` (D-001..D-014),
-`JOURNAL.md` (Wk1–9), `docs/implementation_notes.md`. This file captures the
-non-obvious environment + state so work continues without re-discovery.
+Read this FIRST in a new session, plus `CLAUDE.md`, `DECISIONS.md` (D-001..D-024),
+`JOURNAL.md` (Wk1..17), `docs/implementation_notes.md`. This captures the current
+state + the non-obvious environment so work resumes without re-discovery.
 
-## Where we are
-Tier-A prototype + **Tier-B done and paused**: all three perception models now
-have a real tier (text, image, audio), mock/offline defaults kept. Git history:
+## Location (CHANGED — off OneDrive)
+Repo now at **`C:\dev\triguard`** (WSL **`/mnt/c/dev/triguard`**). Git history intact,
+branch `master`. The old OneDrive copy
+(`C:\Users\jawed\OneDrive\ICAEWSOFTWARE\FYP UOL\triguard`) is stale — do not use it,
+EXCEPT its `.venv` is still the Windows offline interpreter (see below).
 
-- `52ed8d2` chore(lint): silence WSL-only ML imports + loose ML-stub types; tidy yamnet
-- `a2dba37` docs: Tier-A video recording cheat-sheet (PDF)
-- `0899507` chore(audio): commit espeak test clip + verify real audio; fix venv-path docs
-- `f472cdd` feat(audio): real Whisper + YAMNet tier (Sprint 3)
-- `1373e06` fix(repo): track src/triguard/models + feat(image): real BLIP tier (Sprint 2)
-- `86f29b7` Initial commit: Tier-A + real text model (Sprint 1)
+Latest commits (newest first):
+- `c8f22a8` feat(eval): failure analysis + T7 grounding + T8 perf (Phase C)
+- `3bc03cc` feat(image): opt-in OCR (RapidOCR) + T3 OCR->text +0.37 F1 (Phase B)
+- `c4631ba` feat(eval): T6 tri-modal ablation harness + AI-drafted starter manifest (Phase A)
+- earlier: FastAPI demo, model_versions fix, combined venv, real Ollama judge, T2/T3/T4.
 
-Branch `master`, tree clean. Author `Hamza <jawedh011@gmail.com>`.
+## Environments (CRITICAL)
+Windows torch is blocked (WDAC). Real ML runs only in WSL.
 
-## Machine + environments (CRITICAL — three venvs, none has all three)
-Windows torch is blocked by Application Control (WDAC): `WinError 4551` on
-`c10.dll`. So real ML models run only under WSL/Ubuntu.
+| Env | Python | Use |
+|---|---|---|
+| Windows `.venv` at `C:\Users\jawed\OneDrive\ICAEWSOFTWARE\FYP UOL\triguard\.venv` | — | offline defaults only (mock/sklearn/rule) + pytest + reportlab. Call by ABSOLUTE path. |
+| WSL `~/.venv-tri` (py3.12, in $HOME) | 3.12 | **everything real**: torch 2.12.1+cpu, transformers, BLIP, whisper, tensorflow, sklearn, fastapi, jiwer, rapidocr-onnxruntime, psutil |
+| Ollama | — | `$HOME/ollama/bin`, model `llama3:8b-instruct-q4_K_M`, endpoint `localhost:11434` |
 
-| Env | Python | Has | Runs real | Tests |
-|---|---|---|---|---|
-| Windows `.venv` (in OneDrive) | 3.14 | pydantic, sklearn | nothing (mock + sklearn text only) | `$env:PYTHONPATH="src"; python -m pytest -q` → 23 passed, 5 skipped |
-| WSL `.venv-linux` (in repo) | 3.14 | torch, transformers, datasets, pillow | **text (toxic-bert), image (BLIP)** | see below |
-| WSL `~/.venv-triguard-audio` (home, off OneDrive) | 3.12 (uv) | whisper, tensorflow, tf-hub, librosa, soundfile | **audio (Whisper+YAMNet)** | see below |
+- The clone has **no `.venv-linux`** (gitignored, path-bound); `scripts/build_venv_tri.sh`
+  recreates it on demand. Install extras into `~/.venv-tri` via `~/.venv-tri/bin/python -m pip`.
+- **Always `export USE_TF=0`** in `~/.venv-tri` (transformers eagerly imports TF and
+  segfaults otherwise; D-016).
+- **Do NOT install easyocr** — its torchvision is ABI-incompatible with torch 2.12.1+cpu
+  and breaks the stack (D-023). OCR = rapidocr-onnxruntime (torch-free). Re-pin `numpy<2`
+  after any OCR/torch install.
 
-Default everywhere = mock/offline (so the fast suite never downloads). Real tiers
-are opt-in: `force_mode="hf"|"blip"|"real"` or env
-`TRIGUARD_TEXT_BACKEND=hf` / `TRIGUARD_IMAGE_BACKEND=blip` / `TRIGUARD_AUDIO_BACKEND=real`.
-`TRIGUARD_MOCK=1` forces mock.
-
-## Run all tests (from the Windows PowerShell prompt)
+## Test commands
 ```powershell
-# 1) Windows offline
-$env:PYTHONPATH="src"; python -m pytest -q
-# 2) WSL text+image real (27 passed; audio deselected)
-wsl -e bash -lc "cd '/mnt/c/Users/jawed/OneDrive/ICAEWSOFTWARE/FYP UOL/triguard' && source .venv-linux/bin/activate && PYTHONPATH=src python -m pytest -q --run-slow --deselect tests/test_audio_model_real.py"
-# 3) WSL audio real (1 passed)
-wsl -e bash -lc "cd '/mnt/c/Users/jawed/OneDrive/ICAEWSOFTWARE/FYP UOL/triguard' && PYTHONPATH=src ~/.venv-triguard-audio/bin/python -m pytest -q --run-slow tests/test_audio_model_real.py"
+# Windows offline (from any dir): 29 passed / 10 skipped
+$env:PYTHONPATH="C:\dev\triguard\src"; & "C:\Users\jawed\OneDrive\ICAEWSOFTWARE\FYP UOL\triguard\.venv\Scripts\python.exe" -m pytest -q C:\dev\triguard\tests
 ```
-Never run bare `pytest --run-slow` in one env — slow tests for libs that env
-lacks fall back to mock and fail their assertions. Setup-from-scratch scripts:
-`scripts/run_wsl_sprint1.sh` / `2` / `3` (sprint3 needs `sudo apt install -y espeak-ng`
-once, to regenerate `data/sample_inputs/audio_test.wav`).
+```bash
+# WSL real, fast lane
+wsl -e bash -lc "cd /mnt/c/dev/triguard && PYTHONPATH=src ~/.venv-tri/bin/python -m pytest -q"
+# WSL with slow tests (hf/blip/audio/ocr/ollama; needs models/server)
+wsl -e bash -lc "cd /mnt/c/dev/triguard && USE_TF=0 PYTHONPATH=src ~/.venv-tri/bin/python -m pytest -q --run-slow"
+```
+Full command reference (server run, CLI, evals, ollama): **`study/TriGuard_Commands.pdf`**
+(gitignored; regen `python study/build_commands_pdf.py`). PowerShell: single-quote any
+`wsl -e bash -lc '...'` containing `$`.
 
-## Verified numbers (only what runs wrote — never invent)
-- T2 text, Civil Comments 500 rows seed 42: sklearn 0.542 / macro-F1 0.415 (dir `074102`);
-  toxic-bert hf **0.928 / 0.6476** (dir `124802`). `run_t2 --backend hf`.
-- Audio real (espeak clip): transcript approximate, conf 0.523, yamnet `[('Speech',0.86)]`, mode `real-audio`.
-- `run_eval` (14-item Tier-A): accuracy 1.000.
-- Fast suite: 23 passed, 5 skipped (offline).
+## What is real + done
+Text (toxic-bert), image (BLIP), audio (Whisper+YAMNet), rule + real llama3 judge, one
+combined `~/.venv-tri` runs all in one pass. FastAPI demo (`triguard.api.main:app`,
+`/`, `/ui`, `/analyse/text`, `/analyse/multimodal`). Evals T1–T4, T6 ablation, T7
+grounding, T8 perf, failure_analysis. model_versions reflects the real backend.
 
-## Pinned models
-toxic-bert `4d6c22e74ba2fdd26bc4f7238f50766b045a0d94`; BLIP base
-`82a37760796d32b1411fe092ab5d4e227313294b`; Whisper `tiny`; YAMNet TF-Hub `yamnet/1`.
+## Verified numbers (committed under `outputs/evaluation/`; never invent, never edit)
+- T2 text: sklearn 0.542 -> toxic-bert **0.928** (macro-F1 0.6476).
+- T3 image-text (Memotion, n=50): pipeline F1 0.40 / AUROC 0.566; text-only 0.3636;
+  **OCR->text-track +0.37** (image-only 0.06 -> 0.43); OCR->keyword-cues 0.0 (sub-finding).
+- T4 audio: Whisper WER **0.097** (LibriSpeech); YAMNet top-1 0.32 / top-5 0.66 (ESC-50).
+- T6 ablation (n=18, non-confounder): multimodal 0.778/0.685 >= text-only 0.75/0.675 >
+  image/audio-only. `cross_modal harmful` items = 0 (confounders are the student's to add).
+- T7 grounding: llama3 **1.0** (floor metric, cites >=1 token, n=18).
+- T8: real p50 31 ms / p95 4.1 s / cold-start 4.1 s / peak RSS 2.87 GB; mock 0.0 ms / 34.5 MB.
 
-## Working rules (from CLAUDE.md)
-Plan-first then wait for "approved"; STOP before commit (user commits/approves);
-never invent metrics/citations; OneDrive truncates files → `py_compile` after every
-`.py` write; lazy-import heavy ML; keep mock + rule-judge fallbacks; don't change
-the public Pydantic schemas; one modality per sprint.
+## Roadmap remaining (see `~/.claude/plans/how-we-can-improve-*.md`)
+- **Phase D** — demo wow (live cross-modal preset, side-by-side rule-vs-llama3,
+  streaming llama3, `/dashboard` charts). Not started.
+- **Phase E** — report integration. **The report prose + the T6 cross-modal confounder
+  set/labels are the STUDENT's own work** (assistant supplies tables/figures + verifies
+  numbers only).
 
-## Next options (pick one to resume)
-- **Wk6 Preliminary Report** — nearest graded milestone (10%).
-- Wk11 real Ollama judge (path implemented, falls back to rule; not yet exercised).
-- Combined py3.12 venv (transformers+pillow+whisper+tf) for full tri-modal-real in one process.
-- T3 (image, Hateful Memes/MMHS150K) + T4 (audio, AudioSet) real-data eval.
-- FastAPI demo (Prompt 5).
+## Integrity (established this session)
+- T6 confounder cases + ground-truth labels = student's design; the committed manifest is
+  a marked AI-DRAFTED starter (its `provenance` field). Do not present it as the
+  student's evaluation.
+- Disclose AI assistance per CM3070; report in a student voice.
+- Assistant declines to scrub AI provenance / rewrite git history to hide AI use.
+
+## Working rules
+Plan-first then wait "approved"; STOP before commit (user commits, or authorises);
+never invent numbers/citations; `py_compile` after every `.py` write; lazy-import heavy
+ML; keep mock + rule-judge fallbacks + offline defaults; don't change the public Pydantic
+schema; caveman reply style (skill `anthropic-skills:caveman`).
