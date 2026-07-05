@@ -32,6 +32,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from ..data.image_datasets import _SOURCE, load_memotion_sample
+from ..models import image_model
 from ..orchestrator.pipeline import run as run_pipeline
 
 LABELS = ["not_offensive", "offensive"]  # index encodes the 0/1 label
@@ -41,7 +42,61 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="TriGuard T3 image-text evaluation")
     p.add_argument("--sample-size", type=int, default=50)
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--ocr", action="store_true",
+                   help="also run the image-only +/-OCR ablation (needs the blip tier + easyocr)")
     return p.parse_args(argv)
+
+
+def _image_only(samples: list, ocr: bool) -> dict:
+    """Image-track-alone pass with OCR on/off.
+
+    The dataset `text` field is deliberately DROPPED here so the metric isolates
+    OCR's contribution to the IMAGE track. (Feeding OCR to the text track would be
+    redundant on Memotion, whose text field already carries the overlay text.)
+    """
+    os.environ["TRIGUARD_IMAGE_OCR"] = "1" if ocr else "0"
+    true: list[int] = []
+    pred: list[int] = []
+    scores: list[float] = []
+    n_ocr_text = 0
+    for s in samples:
+        r = run_pipeline(image=s.image_path, judge_mode="rule")
+        true.append(s.label)
+        pred.append(_predict_positive(r.risk_label))
+        scores.append(r.risk_score)
+        if r.image_evidence and r.image_evidence.raw.get("ocr_text"):
+            n_ocr_text += 1
+    m = _prf(true, pred)
+    m["auroc"] = _auroc(scores, true)
+    m["n_with_ocr_text"] = n_ocr_text
+    return m
+
+
+def _ocr_to_text(samples: list) -> dict:
+    """Deployment-real route: OCR the image, feed the extracted text to the TEXT
+    track (toxic-bert), no image cues, no dataset text. This is what OCR is *for* —
+    reading overlaid words and classifying them, not matching a keyword vocab."""
+    os.environ["TRIGUARD_IMAGE_OCR"] = "1"
+    true: list[int] = []
+    pred: list[int] = []
+    scores: list[float] = []
+    n_ocr_text = 0
+    for s in samples:
+        ev = image_model.analyse(s.image_path, force_mode="blip")
+        ocr = (ev.raw.get("ocr_text") or "").strip()
+        if ocr:
+            n_ocr_text += 1
+            r = run_pipeline(text=ocr, judge_mode="rule")
+            pred.append(_predict_positive(r.risk_label))
+            scores.append(r.risk_score)
+        else:
+            pred.append(0)      # no readable text -> negative
+            scores.append(0.0)
+        true.append(s.label)
+    m = _prf(true, pred)
+    m["auroc"] = _auroc(scores, true)
+    m["n_with_ocr_text"] = n_ocr_text
+    return m
 
 
 def _confusion(true: list[int], pred: list[int]) -> dict[str, dict[str, int]]:
@@ -176,6 +231,28 @@ def main(argv: list[str] | None = None) -> Path:
             f"image_mode={image_mode}); results do not reflect the real model"
         )
 
+    if args.ocr:
+        os.environ.setdefault("TRIGUARD_IMAGE_BACKEND", "blip")  # OCR runs in the blip tier
+        m_no = _image_only(samples, ocr=False)     # BLIP-caption cues only
+        m_cues = _image_only(samples, ocr=True)    # OCR folded into keyword cues
+        m_text = _ocr_to_text(samples)             # OCR -> toxic-bert text track
+        os.environ.pop("TRIGUARD_IMAGE_OCR", None)
+        summary["ocr_ablation"] = {
+            "measured_on": "image track alone (dataset text dropped)",
+            "image_only_noocr": m_no,
+            "image_only_ocr_cues": m_cues,
+            "image_only_ocr_to_text": m_text,
+            "delta_f1_ocr_to_cues": round(m_cues["f1"] - m_no["f1"], 4),
+            "delta_f1_ocr_to_text": round(m_text["f1"] - m_no["f1"], 4),
+            "headline": "ocr_to_text",
+            "note": ("Two OCR routes vs BLIP-caption-only. Routing OCR text into the "
+                     "keyword cues adds ~0 (the vocab rarely matches meme language) — "
+                     "a sub-finding. Routing OCR text to the toxic-bert TEXT track is "
+                     "the deployment-real path and is the headline. The full-pipeline "
+                     "+/-OCR delta is ~0 because Memotion already supplies the overlay "
+                     "text in its `text` field."),
+        }
+
     out_dir = Path("outputs") / "evaluation" / started.strftime("%Y%m%d-%H%M%S") / "t3"
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / "results.json"
@@ -189,6 +266,15 @@ def main(argv: list[str] | None = None) -> Path:
           f"AUROC={summary['metrics_pipeline']['auroc']}")
     print(f"Text-only: P={baseline['precision']}  R={baseline['recall']}  "
           f"F1={baseline['f1']}  acc={baseline['accuracy']}")
+    if "ocr_ablation" in summary:
+        a = summary["ocr_ablation"]
+        print("Image-only OCR ablation (dataset text dropped):")
+        print(f"  BLIP-caption only    : F1={a['image_only_noocr']['f1']}")
+        print(f"  +OCR -> keyword cues : F1={a['image_only_ocr_cues']['f1']}  "
+              f"(delta {a['delta_f1_ocr_to_cues']})")
+        print(f"  +OCR -> text track   : F1={a['image_only_ocr_to_text']['f1']}  "
+              f"(delta {a['delta_f1_ocr_to_text']})  "
+              f"[ocr_text on {a['image_only_ocr_to_text']['n_with_ocr_text']}/{n}]")
     print(f"Saved to: {out_path}\n")
     return out_path
 

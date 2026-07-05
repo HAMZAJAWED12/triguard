@@ -1,0 +1,162 @@
+{
+  "track": "T3",
+  "run_at": "2026-07-05T11:10:02.299618+00:00",
+  "dataset": {
+    "hub_id": "Ahren09/MMSoc_Memotion",
+    "config": null,
+    "split": "train",
+    "licence": "Memotion / SemEval-2020 Task 8 (research use; meme images are third-party copyright — streamed, never committed)"
+  },
+  "config": {
+    "sample_size": 50,
+    "seed": 42,
+    "decision_rule": "predicted_positive = risk_label in {borderline, harmful}",
+    "judge": "rule",
+    "text_backend": "hf",
+    "image_backend": "blip",
+    "run_env": "wsl-ubuntu-py312-tri"
+  },
+  "model_versions": {
+    "text_mode": "real-hf",
+    "image_mode": "real-blip"
+  },
+  "n_samples": 50,
+  "class_balance": {
+    "not_offensive": 18,
+    "offensive": 32
+  },
+  "metrics_pipeline": {
+    "precision": 0.6923,
+    "recall": 0.2812,
+    "f1": 0.4,
+    "accuracy": 0.46,
+    "auroc": 0.566
+  },
+  "metrics_text_only_baseline": {
+    "precision": 0.6667,
+    "recall": 0.25,
+    "f1": 0.3636,
+    "accuracy": 0.44
+  },
+  "confusion_matrix_pipeline": {
+    "not_offensive": {
+      "not_offensive": 14,
+      "offensive": 4
+    },
+    "offensive": {
+      "not_offensive": 23,
+      "offensive": 9
+    }
+  },
+  "failures": [
+    {
+      "label": "offensive",
+      "pred": "safe",
+      "risk_score": 0.1649,
+      "caption": "a baby crying with the capt that says that you ' re",
+      "text": "THAT LOOK ON YOUR FACE WHEN SOMEONE WAKES UP MAD AT YOU FOR SOMETHING THAT HAPPENED IN THEIR DREAM megenerator.net"
+    },
+    {
+      "label": "offensive",
+      "pred": "safe",
+      "risk_score": 0.1,
+      "caption": "what do you do when you ' re - what do you do when you re - what do you do what do you do what do you",
+      "text": "WHAT DO YOU DO WHEN YOUR DISHWASHER STOPS WORKING? YOU HIT HER quickmeme.com"
+    },
+    {
+      "label": "offensive",
+      "pred": "safe",
+      "risk_score": 0.1,
+      "caption": "why why why why why why why why why why why why why why why why why why why why why why why why why why why why",
+      "text": "WHY AMI NOT IN X-MEN APOCALYPSE imgflip.com"
+    },
+    {
+      "label": "offensive",
+      "pred": "safe",
+      "risk_score": 0.1,
+      "caption": "a man and woman are walking through a crowd",
+      "text": "FANS GET A CLEAR VIEW OF CHERYL'S 'BUMP'"
+    },
+    {
+      "label": "not_offensive",
+      "pred": "harmful",
+      "risk_score": 0.9956,
+      "caption": "a baby is looking at the camera with a capt",
+      "text": "BITCH HOW DA HELL SHE LIKE YOU YOUR A ASSHOLE Make your Meme at www.lolsclub.com LOL's Club » Laugh Out Loud's Club » skeptical baby meme"
+    },
+    {
+      "label": "offensive",
+      "pred": "safe",
+      "risk_score": 0.2132,
+      "caption": "hockey players are trying to get the puck",
+      "text": "SOCCER PLAYERS PRETEND THEY'RE HURT cana puis HOCKEY PLAYERS PRETEND THEY'RE NOT"
+    },
+    {
+      "label": "offensive",
+      "pred": "safe",
+      "risk_score": 0.1536,
+      "caption": "a baby with a rope around his neck",
+      "text": "SO YOU'RE TRYING TO TELL ME.. THE GIRL YOU WAS GRINDING WIT LAST NIGHT IS YOUR SISTER FROM ANOTHER MOTHER?"
+    },
+    {
+      "label": "offensive",
+      "pred": "safe",
+      "risk_score": 0.1,
+      "caption": "a man in a tuxed tuxed tuxed tuxed tuxed tuxed tuxed tuxed tu",
+      "text": "THANKS TO ALL THE ALIENS FOR MAKING MY MEMES POSSIBLE imgflip.com"
+    },
+    {
+      "label": "offensive",
+      "pred": "safe",
+      "risk_score": 0.1,
+      "caption": "spider mememememememememememememememememememememememememememememe",
+      "text": "HERE ARE YOUR OPTIONS: 1. %*$# YOU I'M SPIDERMAN"
+    },
+    {
+      "label": "offensive",
+      "pred": "safe",
+      "risk_score": 0.1,
+      "caption": "the big bang bang bang bang bang bang bang bang bang bang bang bang bang bang bang bang bang bang bang",
+      "text": "Are you gonna eat that whole pie? Maybe. Why not? Who do I have in my life to watch my figure for?"
+    }
+  ],
+  "limitations": [
+    "BLIP is a captioner, not a hate classifier, and does not OCR meme text; the image track rarely fires on offensive memes",
+    "text signal comes from the dataset's OCR field (text_corrected/text_ocr), not from the pipeline's own OCR",
+    "this is a flag-vs-label decision measure, NOT a trained-classifier F1",
+    "small sample (<= 50); indicative, not a benchmark claim",
+    "Memotion 'offensive' is graded and crowd-annotated; binarised as not_offensive -> 0 else 1 (near-threshold items are ambiguous)",
+    "meme images are third-party copyright — streamed + persisted to a gitignored cache, never committed; dataset revision not pinned"
+  ],
+  "ocr_ablation": {
+    "measured_on": "image track alone (dataset text dropped)",
+    "image_only_noocr": {
+      "precision": 1.0,
+      "recall": 0.0312,
+      "f1": 0.0606,
+      "accuracy": 0.38,
+      "auroc": 0.5156,
+      "n_with_ocr_text": 0
+    },
+    "image_only_ocr_cues": {
+      "precision": 1.0,
+      "recall": 0.0312,
+      "f1": 0.0606,
+      "accuracy": 0.38,
+      "auroc": 0.5156,
+      "n_with_ocr_text": 50
+    },
+    "image_only_ocr_to_text": {
+      "precision": 0.7143,
+      "recall": 0.3125,
+      "f1": 0.4348,
+      "accuracy": 0.48,
+      "auroc": 0.5964,
+      "n_with_ocr_text": 50
+    },
+    "delta_f1_ocr_to_cues": 0.0,
+    "delta_f1_ocr_to_text": 0.3742,
+    "headline": "ocr_to_text",
+    "note": "Two OCR routes vs BLIP-caption-only. Routing OCR text into the keyword cues adds ~0 (the vocab rarely matches meme language) — a sub-finding. Routing OCR text to the toxic-bert TEXT track is the deployment-real path and is the headline. The full-pipeline +/-OCR delta is ~0 because Memotion already supplies the overlay text in its `text` field."
+  }
+}

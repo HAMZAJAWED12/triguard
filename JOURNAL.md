@@ -401,3 +401,35 @@
 ### Next steps
 - Student: author ~30–50 cross-modal confounder cases + media -> re-run T6 for the
   headline multimodal-vs-unimodal recall delta. Then roadmap Phase B (OCR).
+
+---
+
+## Week 16 — Opt-in OCR for the image track (roadmap Phase B)
+### Planned work
+- Add OCR so meme text feeds moderation; measure the delta on the image track.
+
+### Completed work
+- `image_model.py` — opt-in OCR (`TRIGUARD_IMAGE_OCR=1`) via RapidOCR (torch-free);
+  `raw["ocr_text"]` + folded into image cues. No schema/pipeline change.
+- `run_t3.py --ocr` — image-track-alone +/-OCR ablation (dataset text dropped).
+- `data/sample_inputs/ocr_test.png` + slow test `tests/test_image_model_ocr.py`.
+- Deps: `rapidocr-onnxruntime` pinned; `build_venv_tri.sh` updated.
+
+### Problems encountered
+- easyocr broke the venv: its torchvision is ABI-incompatible with torch 2.12.1+cpu
+  and its install bumped numpy to 2.5.x, crashing transformers/BLIP. Purged
+  easyocr+torchvision, re-pinned numpy<2, switched to torch-free RapidOCR.
+
+### Decisions made
+- D-023: opt-in OCR via RapidOCR; image-track-alone ablation.
+
+### Tests/evidence produced
+- Fast suite 26 passed / 10 skipped. Slow OCR test passes (reads the synthetic clip).
+  T3 OCR ablation (real, n=50, `outputs/evaluation/20260705-111002/t3/`, OCR 50/50) vs
+  BLIP-caption-only F1 0.0606: OCR->keyword-cues 0.0606 (delta 0.0, sub-finding);
+  OCR->toxic-bert text track F1 0.4348 (delta +0.3742, headline). OCR is valuable when
+  routed to a real classifier; the narrow keyword cues were the bottleneck.
+
+### Next steps
+- Roadmap Phase C (failure analysis, T7 grounding, T8 perf). Optionally route OCR
+  text to the toxic-bert text track to realise its value.

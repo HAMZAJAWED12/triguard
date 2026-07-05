@@ -29,6 +29,14 @@ UV=.venv-linux/bin/uv
     "transformers>=4.40,<5" "pillow>=10,<12" openai-whisper \
     "tensorflow-cpu>=2.15,<3" "tensorflow-hub>=0.16" "librosa>=0.10,<1" "soundfile>=0.12"
 
+# Optional per-track extras: T2 WER (jiwer), FastAPI demo, opt-in OCR.
+# RapidOCR is ONNX-based / torch-free (easyocr's torchvision is ABI-incompatible
+# with torch 2.12.1+cpu here). Re-pin numpy<2 last since some extras pull numpy 2.x.
+"$UV" pip install -p "$VENV" \
+    "jiwer>=3.0,<4" "fastapi>=0.110,<1" "uvicorn>=0.27,<1" \
+    "python-multipart>=0.0.9,<1" "httpx>=0.27,<1" "rapidocr-onnxruntime>=1.3,<2"
+"$UV" pip install -p "$VENV" "numpy<2"
+
 echo "### IMPORT PROOF (one process)"
 "$VENV/bin/python" - <<'PY'
 import torch, transformers, PIL, whisper, tensorflow as tf, tensorflow_hub, sklearn, pydantic, numpy

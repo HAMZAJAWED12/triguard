@@ -27,6 +27,9 @@ eval = [
     "uvicorn>=0.27,<1",
     "python-multipart>=0.0.9,<1",
     "httpx>=0.27,<1",
+    # Phase B — opt-in OCR for the image track. RapidOCR (ONNX runtime): torch-free,
+    # so it does not disturb the pinned torch/torchvision-free numpy<2 stack.
+    "rapidocr-onnxruntime>=1.3,<2",
 ]
 # Sprint 3 — real audio (Whisper + YAMNet). REQUIRES Python <= 3.12
 # (TensorFlow / numba have no 3.14 wheels). Install into a py3.12 venv;

@@ -416,3 +416,37 @@ the Windows `.venv` (the api module importorskip-skips as one entry). Boot smoke
 (uvicorn 127.0.0.1:8001, `TRIGUARD_MOCK=1`): `GET /` ->
 `{"status":"ok","version":"0.1.0-tier-a"}`, `POST /analyse/text` -> schema-valid
 TriGuardResult, `GET /ui` -> HTML.
+
+### Opt-in OCR for the image track (Phase B)
+
+`TRIGUARD_IMAGE_OCR=1` turns on OCR in the blip tier of `image_model.py`: RapidOCR
+(`rapidocr-onnxruntime`, ONNX runtime — **torch-free**, chosen because easyocr's
+torchvision is ABI-incompatible with the pinned `torch 2.12.1+cpu`
+[`operator torchvision::nms does not exist`] and its install bumps numpy to 2.x) reads
+overlaid text into `ImageEvidence.raw["ocr_text"]` (no schema change) and folds it
+into `visual_risk_cues`. Off by default; the orchestrator contract is unchanged.
+
+`run_t3 --ocr` runs the **image-track-alone** ablation (image-only caption vs
+image-only caption+OCR, dataset `text` dropped). The full-pipeline +/-OCR delta is
+intentionally not the headline: Memotion's `text` field already supplies the overlay
+text, so it is ~0 and misleading.
+
+Result (real hf+blip, rule judge, n=50; OCR read text on 50/50 memes). Three
+image-track-alone conditions vs BLIP-caption-only (F1 0.0606):
+
+| route | F1 | delta |
+|---|---|---|
+| BLIP caption only | 0.0606 | — |
+| +OCR -> keyword cues | 0.0606 | 0.0 (sub-finding) |
+| +OCR -> toxic-bert text track | **0.4348** | **+0.3742** |
+
+OCR's value is real and large when the extracted text is routed to a real classifier
+(+0.37 F1), recovering essentially the same value as the dataset-text pipeline (0.40)
+and text-only (0.3636) — comparable, within small-sample (n=50) noise.
+Folding OCR into the narrow keyword cue vocab adds ~0 — that vocab, not OCR, is the
+bottleneck. The full-pipeline +/-OCR delta is ~0 only because Memotion already supplies
+the overlay text in its `text` field.
+
+Install note: `rapidocr-onnxruntime` (pinned in `[eval]`); re-pin `numpy<2` after
+(some OCR deps pull numpy 2.x). Do NOT use easyocr in this venv — its torchvision
+breaks the torch stack.

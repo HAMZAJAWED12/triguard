@@ -23,5 +23,8 @@ fastapi>=0.110,<1
 uvicorn>=0.27,<1
 python-multipart>=0.0.9,<1
 httpx>=0.27,<1
+# Phase B — opt-in OCR for the image track. RapidOCR (ONNX): torch-free, keeps
+# the pinned numpy<2 + CPU-torch stack intact (easyocr's torchvision breaks it).
+rapidocr-onnxruntime>=1.3,<2
 # optional — uncomment when integrating real models
 # accelerate>=0.30

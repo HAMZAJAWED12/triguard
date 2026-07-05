@@ -474,3 +474,47 @@ judge, `outputs/evaluation/20260704-221056/t6/`): multimodal acc 0.7778 / macro-
 0.2222; `cross_modal harmful` items 0 (table empty until confounders added). On this
 non-confounder set the multimodal gain is small because harm is text-driven — an
 honest baseline; the cross-modal advantage awaits real confounder cases.
+
+## Decision 023: Opt-in OCR for the image track (RapidOCR) + T3 OCR ablation (Phase B)
+Date: 2026-07-05
+Status: accepted
+
+Context: T3's own limitations note that BLIP captions but does not OCR meme text.
+Phase B adds OCR and measures its value.
+OCR engine: **easyocr was abandoned** — it hard-requires torchvision, and no
+torchvision on the CPU index is ABI-compatible with the pinned `torch 2.12.1+cpu`
+(`RuntimeError: operator torchvision::nms does not exist`); its install also bumped
+numpy to 2.5.x and crashed transformers/BLIP. Switched to **rapidocr-onnxruntime**
+(ONNX runtime, torch-free), which leaves the pinned torch + numpy<2 stack intact.
+Decision: Add OCR behind `TRIGUARD_IMAGE_OCR=1` in `image_model.py` (off by default):
+`_ocr_text()` reads overlaid text via RapidOCR into `ImageEvidence.raw["ocr_text"]`
+(NO schema change) and folds it into `visual_risk_cues` alongside the caption. The
+orchestrator contract is unchanged. `run_t3 --ocr` runs three image-track-alone
+conditions vs BLIP-caption-only (dataset `text` dropped): OCR->keyword-cues and
+OCR->toxic-bert-text-track. The OCR->text route is the deployment-real headline; the
+full-pipeline +/-OCR delta is not reported because Memotion's `text` field already
+supplies the overlay text (~0, misleading).
+`rapidocr-onnxruntime` pinned in `[eval]` + requirements; `build_venv_tri.sh`
+installs it and re-pins numpy<2. Slow test `tests/test_image_model_ocr.py` on a
+committed synthetic `ocr_test.png`.
+Reason: close the documented OCR gap without a system binary (no sudo) and without
+disturbing the torch stack; measure OCR's value where it actually applies.
+Impact: `image_model.py` (OCR helpers + cue fold), `run_t3.py` (`--ocr` ablation),
+new `ocr_test.png` + slow test, deps, build script. Fast suite 26 passed, 10 skipped
+(OCR test skips where rapidocr absent). Schema + pipeline + wrapper public contract
+unchanged.
+Result (real hf+blip, rule judge, Memotion n=50,
+`outputs/evaluation/20260705-111002/t3/`; OCR read text on 50/50 images, slow test
+passes on the synthetic clip). Three image-track-alone conditions vs BLIP-caption-only
+(F1 0.0606):
+ - OCR -> keyword cues: F1 0.0606 (**delta 0.0**) — sub-finding: the cue vocab
+   (weapon/violence/hate_symbol/drug/nudity) rarely matches meme language.
+ - OCR -> toxic-bert TEXT track: F1 **0.4348** (**delta +0.3742**) — the deployment-real
+   headline; OCR'd meme text classified by toxic-bert recovers essentially the same
+   value as the text track (dataset text-only 0.3636, full pipeline 0.40) — comparable,
+   within small-sample (n=50) noise.
+The full-pipeline +/-OCR delta is ~0 only because Memotion pre-supplies the overlay
+text in its `text` field. Conclusion (report-worthy): OCR's value is real and large
+when routed to a real classifier (+0.37 F1 on the image track); folding it into the
+narrow keyword cues wastes it (0.0 delta, sub-finding); it looks redundant on Memotion
+solely because the dataset already carries the text.

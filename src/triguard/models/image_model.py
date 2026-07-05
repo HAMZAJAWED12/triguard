@@ -115,6 +115,34 @@ def _open_image(image: ImageInput):
     return img
 
 
+def _ocr_enabled() -> bool:
+    return os.getenv("TRIGUARD_IMAGE_OCR", "").strip() in {"1", "true", "yes"}
+
+
+@lru_cache(maxsize=1)
+def _ocr_engine():
+    """Lazy RapidOCR engine (ONNX runtime; no torch/torchvision, so it cannot
+    disturb the pinned torch stack). Downloads small ONNX models on first use."""
+    from rapidocr_onnxruntime import RapidOCR
+
+    return RapidOCR()
+
+
+def _ocr_text(img) -> str:
+    """Read overlaid text from a PIL image via RapidOCR; '' on any failure."""
+    try:
+        import numpy as np
+
+        result, _ = _ocr_engine()(np.array(img))
+        if not result:
+            return ""
+        return " ".join(str(item[1]).strip()
+                        for item in result if len(item) > 1 and item[1])
+    except Exception as e:  # rapidocr missing / load failed -> no OCR text
+        _log.warning("OCR unavailable (%s); skipping", e)
+        return ""
+
+
 def _blip_analyse(image: ImageInput) -> ImageEvidence:
     global _BLIP_BROKEN
     if _BLIP_BROKEN:
@@ -150,18 +178,26 @@ def _blip_analyse(image: ImageInput) -> ImageEvidence:
             fallback = False
     confidence = max(0.0, min(1.0, round(confidence, 4)))
 
+    # Opt-in OCR (TRIGUARD_IMAGE_OCR=1): read overlaid/meme text and let it drive
+    # the image risk cues alongside the caption. Text lands in raw["ocr_text"]
+    # (no schema change). Off by default; the orchestrator contract is unchanged.
+    ocr = _ocr_text(img) if _ocr_enabled() else ""
+    cue_source = f"{caption} {ocr}" if ocr else caption
+
     raw = {
         "mode": "real-blip",
         "model_name": _BLIP_MODEL,
         "model_revision": _BLIP_REVISION,
         "caption": caption,
     }
+    if ocr:
+        raw["ocr_text"] = ocr
     if fallback:
         raw["confidence_fallback"] = True
 
     return ImageEvidence(
         caption=caption or "an unrecognised image",
-        visual_risk_cues=_cues_from_text(caption),
+        visual_risk_cues=_cues_from_text(cue_source),
         confidence=confidence,
         raw=raw,
     )
