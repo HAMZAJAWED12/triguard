@@ -621,6 +621,38 @@ rather than defaulting to `real`, and its `source` string no longer claims
 git-committed status (it reads what is on disk). Two new regression tests
 (temp-file cleanup; tokens-then-death mid-stream fallback) + NO_PROXY guards
 keep the closed-port fallback tests offline under system proxies.
+
+## Decision 026: T6 evaluation set v2 — student-reviewed replacement manifest
+Date: 2026-07-05
+Status: accepted
+
+Context: The original T6 manifest was an AI-DRAFTED starter set (D-022) whose
+labels had to be reviewed and owned by the student before use as report
+evidence. The student replaced it with a v2 set (24 items: 10 safe, 6
+borderline, 8 harmful; text-only, image-only, audio-only and multimodal
+combinations over the two committed benign media assets) and reviewed,
+edited and approved the items and labels.
+Decision: Adopt the v2 manifest as the T6 evaluation set. Its `provenance`
+field now records the true status: "drafted with AI assistance, then
+reviewed, edited and approved by the author (2026-07-05); the author owns
+these ground-truth labels". `run_t6.py`'s hardcoded "AI-DRAFTED starter set"
+limitation string was replaced with a provenance-neutral pointer to
+`manifest_provenance` (the old wording would have been false for any
+reviewed manifest). AI assistance remains disclosed — in the provenance
+field and in the report's AI-use section — per the UoL Generative AI policy
+("declare how and where"); nothing is scrubbed.
+Impact: manifest.json (items + provenance), run_t6.py (one limitation
+string). Fast suite unchanged: 45 passed / 10 skipped (WSL). v1's committed
+run (20260704-221056, n=18) remains as history; the report uses v2.
+Result (run 20260705-160858, `~/.venv-tri`, USE_TF=0, real hf+blip+real-audio,
+rule judge, n=24): multimodal acc 0.625 / macro-F1 0.4945 (n=24) >= text-only
+0.5909 / 0.4786 (n=22) > image-only 0.5 / 0.2222 (n=8) = audio-only 0.5 /
+0.2222 (n=6); cross_modal harmful items 0 (table empty as expected).
+Honest reading: v2 scores lower than the v1 starter set (0.625 vs 0.778 acc)
+because several v2 borderline items are mild negative opinions that
+toxic-bert scores below the rule judge's 0.35 borderline threshold — the
+borderline class drives the drop. That is a finding about the pipeline's
+recall on mild incivility, not a defect in the set; report-worthy.
 Result (verified live, WSL `~/.venv-tri`, mock perception, warm llama3): the
 offline smoke shows every endpoint degrading honestly (`ollama->rule`,
 `rule_fallback`); the real smoke streamed 98 token events ending in a

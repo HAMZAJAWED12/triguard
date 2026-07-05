@@ -517,3 +517,33 @@
 ### Next steps
 - Phase E — report integration (tables/figures from committed numbers;
   prose + T6 confounder set remain the student's own work).
+
+---
+
+## Week 18b — T6 evaluation set v2 (student-reviewed)
+### Planned work
+- Replace the AI-drafted T6 starter set with a set reviewed and owned by the
+  student; update the declaration honestly; re-run T6.
+
+### Completed work
+- New `triguard_eval_v1/manifest.json` v2: 24 items (10 safe / 6 borderline /
+  8 harmful) authored as an AI-assisted draft, then reviewed, edited and
+  approved by the student; provenance field records exactly that (D-026).
+- `run_t6.py`: hardcoded "AI-DRAFTED starter set" limitation replaced with a
+  neutral pointer to `manifest_provenance`.
+- Real T6 re-run on the v2 set (run 20260705-160858).
+
+### Decisions made
+- D-026: adopt v2 manifest; disclosure preserved (manifest provenance +
+  report AI-use section), per the UoL Generative AI policy.
+
+### Tests/evidence produced
+- Fast suite 45 passed / 10 skipped (WSL). T6 v2 (real hf+blip+real-audio,
+  rule judge, n=24): multimodal 0.625 acc / 0.4945 macro-F1 >= text-only
+  0.5909 / 0.4786 > image/audio-only 0.5 / 0.2222; cross_modal harmful 0.
+  Honest note: lower than v1 because v2's borderline items are milder than
+  the rule judge's 0.35 threshold catches — a real recall finding.
+
+### Next steps
+- Phase E: report skeleton + evidence tables once the CM3070 spec + module
+  AI-level statement are supplied.

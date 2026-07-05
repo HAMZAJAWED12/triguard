@@ -62,8 +62,10 @@ grounding, T8 perf, failure_analysis. model_versions reflects the real backend.
 - T3 image-text (Memotion, n=50): pipeline F1 0.40 / AUROC 0.566; text-only 0.3636;
   **OCR->text-track +0.37** (image-only 0.06 -> 0.43); OCR->keyword-cues 0.0 (sub-finding).
 - T4 audio: Whisper WER **0.097** (LibriSpeech); YAMNet top-1 0.32 / top-5 0.66 (ESC-50).
-- T6 ablation (n=18, non-confounder): multimodal 0.778/0.685 >= text-only 0.75/0.675 >
-  image/audio-only. `cross_modal harmful` items = 0 (confounders are the student's to add).
+- T6 ablation v2 (n=24, student-reviewed set, run 20260705-160858): multimodal
+  0.625/0.4945 >= text-only 0.5909/0.4786 > image/audio-only 0.5/0.2222.
+  `cross_modal harmful` items = 0 (no suitable media for confounders). The old
+  v1 AI-starter run (n=18, 0.778/0.685) stays committed as history; report uses v2.
 - T7 grounding: llama3 **1.0** (floor metric, cites >=1 token, n=18).
 - T8: real p50 31 ms / p95 4.1 s / cold-start 4.1 s / peak RSS 2.87 GB; mock 0.0 ms / 34.5 MB.
 

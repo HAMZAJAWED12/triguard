@@ -1,0 +1,208 @@
+{
+  "track": "T6",
+  "run_at": "2026-07-05T16:08:58.018597+00:00",
+  "manifest": "data/sample_inputs/triguard_eval_v1/manifest.json",
+  "manifest_provenance": "v2 evaluation set: drafted with AI assistance, then reviewed, edited and approved by the author (2026-07-05). The author owns these ground-truth labels and takes responsibility for them. cross_modal confounder cases are not included because the available benign media assets cannot construct genuine cross-modal conflict, so the cross_modal_ablation table is expected to be empty.",
+  "config": {
+    "judge": "rule",
+    "text_backend": "hf",
+    "image_backend": "blip",
+    "audio_backend": "real",
+    "run_env": "wsl-ubuntu-py312-tri"
+  },
+  "n_items": 24,
+  "class_balance": {
+    "safe": 10,
+    "borderline": 6,
+    "harmful": 8
+  },
+  "conditions": {
+    "text_only": {
+      "n": 22,
+      "accuracy": 0.5909,
+      "macro_f1": 0.4786,
+      "per_class": {
+        "safe": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6667
+        },
+        "borderline": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "harmful": {
+          "precision": 1.0,
+          "recall": 0.625,
+          "f1": 0.7692
+        }
+      },
+      "confusion_matrix": {
+        "safe": {
+          "safe": 8,
+          "borderline": 0,
+          "harmful": 0
+        },
+        "borderline": {
+          "safe": 6,
+          "borderline": 0,
+          "harmful": 0
+        },
+        "harmful": {
+          "safe": 2,
+          "borderline": 1,
+          "harmful": 5
+        }
+      },
+      "latency_ms": {
+        "p50": 60,
+        "p95": 70,
+        "max": 9327
+      }
+    },
+    "image_only": {
+      "n": 8,
+      "accuracy": 0.5,
+      "macro_f1": 0.2222,
+      "per_class": {
+        "safe": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6667
+        },
+        "borderline": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "harmful": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "confusion_matrix": {
+        "safe": {
+          "safe": 4,
+          "borderline": 0,
+          "harmful": 0
+        },
+        "borderline": {
+          "safe": 2,
+          "borderline": 0,
+          "harmful": 0
+        },
+        "harmful": {
+          "safe": 2,
+          "borderline": 0,
+          "harmful": 0
+        }
+      },
+      "latency_ms": {
+        "p50": 3958,
+        "p95": 5114,
+        "max": 6213
+      }
+    },
+    "audio_only": {
+      "n": 6,
+      "accuracy": 0.5,
+      "macro_f1": 0.2222,
+      "per_class": {
+        "safe": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6667
+        },
+        "borderline": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "harmful": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "confusion_matrix": {
+        "safe": {
+          "safe": 3,
+          "borderline": 0,
+          "harmful": 0
+        },
+        "borderline": {
+          "safe": 1,
+          "borderline": 0,
+          "harmful": 0
+        },
+        "harmful": {
+          "safe": 2,
+          "borderline": 0,
+          "harmful": 0
+        }
+      },
+      "latency_ms": {
+        "p50": 832,
+        "p95": 1131,
+        "max": 19580
+      }
+    },
+    "multimodal": {
+      "n": 24,
+      "accuracy": 0.625,
+      "macro_f1": 0.4945,
+      "per_class": {
+        "safe": {
+          "precision": 0.5556,
+          "recall": 1.0,
+          "f1": 0.7143
+        },
+        "borderline": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "harmful": {
+          "precision": 1.0,
+          "recall": 0.625,
+          "f1": 0.7692
+        }
+      },
+      "confusion_matrix": {
+        "safe": {
+          "safe": 10,
+          "borderline": 0,
+          "harmful": 0
+        },
+        "borderline": {
+          "safe": 6,
+          "borderline": 0,
+          "harmful": 0
+        },
+        "harmful": {
+          "safe": 2,
+          "borderline": 1,
+          "harmful": 5
+        }
+      },
+      "latency_ms": {
+        "p50": 160,
+        "p95": 6436,
+        "max": 7448
+      }
+    }
+  },
+  "cross_modal_ablation": {
+    "n_cross_modal_harmful": 0,
+    "note": "no cross_modal harmful items in the manifest; add confounder cases to populate this table"
+  },
+  "limitations": [
+    "ground-truth labels come from the project's hand-built manifest; see manifest_provenance for its authorship and review status",
+    "no cross_modal confounder items yet (only two benign committed media assets); the cross-modal ablation table is empty until such cases are added",
+    "small set; indicative, not a benchmark claim",
+    "unimodal conditions only score items that have that modality (see each n)",
+    "rule judge (deterministic); no LLM-judge variant run here"
+  ]
+}

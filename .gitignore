@@ -23,6 +23,9 @@ env/
 /models/
 .cache/
 
+# --- Local demo media (ethics: harmful sample media never committed; delete after submission) ---
+data/local_demo/
+
 # --- Real dataset downloads (evaluation track T2) ---
 # Keep hand-built data/sample_inputs/ tracked; ignore only downloads/caches.
 data/hf_cache/

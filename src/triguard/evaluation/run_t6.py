@@ -184,9 +184,8 @@ def main(argv: list[str] | None = None) -> Path:
         "conditions": results,
         "cross_modal_ablation": cross,
         "limitations": [
-            "manifest is an AI-DRAFTED starter set (see manifest_provenance) — the "
-            "labels are ground truth for this run but must be reviewed/owned before "
-            "use as report evidence",
+            "ground-truth labels come from the project's hand-built manifest; see "
+            "manifest_provenance for its authorship and review status",
             "no cross_modal confounder items yet (only two benign committed media "
             "assets); the cross-modal ablation table is empty until such cases are added",
             "small set; indicative, not a benchmark claim",

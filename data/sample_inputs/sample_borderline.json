@@ -1,5 +1,5 @@
 {
   "text": "The food at that restaurant was disgusting and a waste of money",
-  "image": "/data/restaurant_review_plate.jpg",
-  "audio": "/data/calm_speech_review.wav"
+  "image": "data/local_demo/restaurant_review_plate.jpg",
+  "audio": "data/local_demo/calm_speech_review.wav"
 }
