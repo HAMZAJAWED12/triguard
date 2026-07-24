@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 340" font-family="Arial, Helvetica, sans-serif" font-size="13">
+  <style>
+    .axis{stroke:#555;stroke-width:1}
+    .grid{stroke:#ddd;stroke-width:1}
+    .b3{fill:#c9c9c9}
+    .b2{fill:#9db4d8}
+    .b1{fill:#0b3d91}
+    .lbl{fill:#111}
+    .sub{fill:#555;font-size:11px}
+    .val{fill:#111;font-size:12px}
+    .title{font-size:14px;font-weight:bold}
+  </style>
+  <text x="320" y="22" text-anchor="middle" class="title">T3 OCR ablation — image track alone, F1 (Memotion, n=50)</text>
+  <text x="320" y="38" text-anchor="middle" class="sub">source: outputs/evaluation/20260705-111002/t3/results.json (dataset text dropped)</text>
+
+  <!-- plot x 90..600 y 60..280 scale 0..0.5 (220px) -->
+  <line x1="90" y1="280" x2="600" y2="280" class="axis"/>
+  <line x1="90" y1="60" x2="90" y2="280" class="axis"/>
+  <g class="sub">
+    <line x1="90" y1="170" x2="600" y2="170" class="grid"/><text x="84" y="174" text-anchor="end">0.25</text>
+    <line x1="90" y1="60" x2="600" y2="60" class="grid"/><text x="84" y="64" text-anchor="end">0.50</text>
+    <text x="84" y="284" text-anchor="end">0</text>
+  </g>
+
+  <!-- 0.0606 -> h=26.66 ; 0.4348 -> h=191.31 -->
+  <rect x="140" y="253.34" width="90" height="26.66" class="b3"/>
+  <text x="185" y="247" text-anchor="middle" class="val">0.0606</text>
+  <text x="185" y="300" text-anchor="middle" class="lbl">BLIP caption</text>
+  <text x="185" y="314" text-anchor="middle" class="lbl">only</text>
+
+  <rect x="285" y="253.34" width="90" height="26.66" class="b2"/>
+  <text x="330" y="247" text-anchor="middle" class="val">0.0606</text>
+  <text x="330" y="300" text-anchor="middle" class="lbl">+OCR &#8594; keyword</text>
+  <text x="330" y="314" text-anchor="middle" class="lbl">cues (delta 0.0)</text>
+
+  <rect x="430" y="88.69" width="90" height="191.31" class="b1"/>
+  <text x="475" y="82" text-anchor="middle" class="val">0.4348</text>
+  <text x="475" y="300" text-anchor="middle" class="lbl">+OCR &#8594; toxic-bert</text>
+  <text x="475" y="314" text-anchor="middle" class="lbl">text track (delta 0.3742)</text>
+</svg>

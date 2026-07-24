@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 360" font-family="Arial, Helvetica, sans-serif" font-size="13">
+  <defs>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#333"/>
+    </marker>
+  </defs>
+  <style>
+    .actor{fill:#e8eef8;stroke:#0b3d91;stroke-width:1.4}
+    .life{stroke:#999;stroke-width:1;stroke-dasharray:4 4}
+    .msg{stroke:#333;stroke-width:1.3;marker-end:url(#a2)}
+    .warn{stroke:#7a4a02;stroke-width:1.2;stroke-dasharray:5 4;marker-end:url(#a2)}
+    .lbl{fill:#111}
+    .sub{fill:#555;font-size:11px}
+    .title{font-size:15px;font-weight:bold}
+  </style>
+
+  <text x="450" y="22" text-anchor="middle" class="title">POST /analyse/stream — SSE protocol (token stream is presentation-only)</text>
+
+  <rect x="40" y="40" width="150" height="32" class="actor"/>
+  <text x="115" y="61" text-anchor="middle" class="lbl">browser UI</text>
+  <rect x="380" y="40" width="150" height="32" class="actor"/>
+  <text x="455" y="61" text-anchor="middle" class="lbl">FastAPI endpoint</text>
+  <rect x="700" y="40" width="160" height="32" class="actor"/>
+  <text x="780" y="61" text-anchor="middle" class="lbl">judge_stream / Ollama</text>
+
+  <line x1="115" y1="72" x2="115" y2="340" class="life"/>
+  <line x1="455" y1="72" x2="455" y2="340" class="life"/>
+  <line x1="780" y1="72" x2="780" y2="340" class="life"/>
+
+  <line x1="115" y1="95" x2="455" y2="95" class="msg"/>
+  <text x="285" y="89" text-anchor="middle" class="sub">multipart text/image/audio</text>
+
+  <rect x="447" y="105" width="16" height="40" fill="#c9d6ec" stroke="#0b3d91"/>
+  <text x="560" y="122" class="sub">perception runs ONCE (rule verdict computed);</text>
+  <text x="560" y="135" class="sub">temp files deleted BEFORE streaming starts</text>
+
+  <line x1="455" y1="160" x2="115" y2="160" class="msg"/>
+  <text x="285" y="154" text-anchor="middle" class="sub">event 1: evidence + instant rule verdict</text>
+
+  <line x1="455" y1="185" x2="780" y2="185" class="msg"/>
+  <text x="617" y="179" text-anchor="middle" class="sub">same prompt body, stream:true (NDJSON)</text>
+
+  <line x1="780" y1="215" x2="115" y2="215" class="msg"/>
+  <text x="450" y="209" text-anchor="middle" class="sub">token events ×N (rendered via textContent — draft only)</text>
+
+  <line x1="780" y1="255" x2="115" y2="255" class="msg"/>
+  <text x="450" y="249" text-anchor="middle" class="sub">final event: schema-validated JudgeOutput, source: "ollama", judge_label "ollama"</text>
+
+  <line x1="780" y1="300" x2="115" y2="300" class="warn"/>
+  <text x="450" y="294" text-anchor="middle" class="sub">any failure (unreachable / timeout mid-stream / invalid JSON) → final event from rule judge,</text>
+  <text x="450" y="316" text-anchor="middle" class="sub">source: "rule_fallback", label "ollama→rule"; UI visibly marks the streamed draft as NOT the verdict</text>
+</svg>

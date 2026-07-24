@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" font-family="Arial, Helvetica, sans-serif" font-size="13">
+  <style>
+    .axis{stroke:#555;stroke-width:1}
+    .grid{stroke:#ddd;stroke-width:1}
+    .b1{fill:#9db4d8}
+    .b2{fill:#0b3d91}
+    .lbl{fill:#111}
+    .sub{fill:#555;font-size:11px}
+    .val{fill:#111;font-size:12px}
+    .title{font-size:14px;font-weight:bold}
+  </style>
+  <text x="320" y="22" text-anchor="middle" class="title">T2 text track — sklearn baseline vs toxic-bert (Civil Comments, n=500)</text>
+  <text x="320" y="38" text-anchor="middle" class="sub">source: outputs/evaluation/20260623-074102 and 20260623-124802 (t2/results.json)</text>
+
+  <!-- plot area: x 80..600, y 60..300 ; scale 0..1 -->
+  <line x1="80" y1="300" x2="600" y2="300" class="axis"/>
+  <line x1="80" y1="60" x2="80" y2="300" class="axis"/>
+  <g class="sub">
+    <line x1="80" y1="180" x2="600" y2="180" class="grid"/><text x="74" y="184" text-anchor="end">0.5</text>
+    <line x1="80" y1="60" x2="600" y2="60" class="grid"/><text x="74" y="64" text-anchor="end">1.0</text>
+    <text x="74" y="304" text-anchor="end">0</text>
+  </g>
+
+  <!-- accuracy group: sklearn 0.542 -> h=130.08 ; toxicbert 0.928 -> h=222.72 -->
+  <rect x="130" y="169.92" width="70" height="130.08" class="b1"/>
+  <text x="165" y="163" text-anchor="middle" class="val">0.542</text>
+  <rect x="210" y="77.28" width="70" height="222.72" class="b2"/>
+  <text x="245" y="71" text-anchor="middle" class="val">0.928</text>
+  <text x="205" y="322" text-anchor="middle" class="lbl">accuracy</text>
+
+  <!-- macro-F1 group: sklearn 0.4149 -> 99.58 ; hf 0.6476 -> 155.42 -->
+  <rect x="390" y="200.42" width="70" height="99.58" class="b1"/>
+  <text x="425" y="194" text-anchor="middle" class="val">0.4149</text>
+  <rect x="470" y="144.58" width="70" height="155.42" class="b2"/>
+  <text x="505" y="138" text-anchor="middle" class="val">0.6476</text>
+  <text x="465" y="322" text-anchor="middle" class="lbl">macro-F1</text>
+
+  <!-- legend -->
+  <rect x="130" y="336" width="14" height="12" class="b1"/>
+  <text x="150" y="346" class="sub">sklearn TF-IDF + LR (offline floor)</text>
+  <rect x="390" y="336" width="14" height="12" class="b2"/>
+  <text x="410" y="346" class="sub">unitary/toxic-bert (pinned revision)</text>
+</svg>
