@@ -97,7 +97,8 @@ def _inputs_for(item: T6Item, condition: str) -> Optional[dict]:
     return kwargs or None
 
 
-def _eval_condition(items: list[T6Item], condition: str) -> dict:
+def _eval_condition(items: list[T6Item], condition: str,
+                    judge: str = "rule") -> dict:
     true: list[str] = []
     pred: list[str] = []
     latencies: list[int] = []
@@ -106,7 +107,7 @@ def _eval_condition(items: list[T6Item], condition: str) -> dict:
         kwargs = _inputs_for(item, condition)
         if kwargs is None:
             continue  # item has no input for this condition
-        result = run_pipeline(judge_mode="rule", **kwargs)
+        result = run_pipeline(judge_mode=judge, **kwargs)
         true.append(item.label)
         pred.append(result.risk_label)
         latencies.append(result.latency_ms)
@@ -155,11 +156,16 @@ def _cross_modal_recall(items: list[T6Item], results: dict) -> dict:
 def main(argv: list[str] | None = None) -> Path:
     p = argparse.ArgumentParser(description="TriGuard T6 tri-modal + ablation eval")
     p.add_argument("--manifest", default=str(_MANIFEST))
+    p.add_argument("--judge", choices=["rule", "ollama"], default="rule",
+                   help="judge for every condition (default rule, reproducible; "
+                        "ollama needs a running server and is the interesting "
+                        "variant for cross-modal confounder items)")
     args = p.parse_args(argv)
     started = datetime.now(timezone.utc)
 
     items = _load_items(Path(args.manifest))
-    results = {cond: _eval_condition(items, cond) for cond in CONDITIONS}
+    results = {cond: _eval_condition(items, cond, args.judge)
+               for cond in CONDITIONS}
     cross = _cross_modal_recall(items, results)
 
     # strip the internal per-item map from the saved envelope
@@ -173,7 +179,7 @@ def main(argv: list[str] | None = None) -> Path:
         "manifest": args.manifest,
         "manifest_provenance": manifest_raw.get("provenance"),
         "config": {
-            "judge": "rule",
+            "judge": args.judge,
             "text_backend": os.getenv("TRIGUARD_TEXT_BACKEND", "sklearn"),
             "image_backend": os.getenv("TRIGUARD_IMAGE_BACKEND", "mock"),
             "audio_backend": os.getenv("TRIGUARD_AUDIO_BACKEND", "mock"),
@@ -190,7 +196,9 @@ def main(argv: list[str] | None = None) -> Path:
             "assets); the cross-modal ablation table is empty until such cases are added",
             "small set; indicative, not a benchmark claim",
             "unimodal conditions only score items that have that modality (see each n)",
-            "rule judge (deterministic); no LLM-judge variant run here",
+            ("rule judge (deterministic)" if args.judge == "rule"
+             else "ollama/llama3 judge (non-deterministic; falls back to rule "
+                  "when unreachable — check model_versions in per-run logs)"),
         ],
     }
 

@@ -578,3 +578,30 @@
 
 ### Next steps
 - Record the final demo video off demo_up.sh; finish the final report.
+
+---
+
+## Week 19b — Confounder-set infrastructure (thesis-metric gap)
+### Planned work
+- Remove every mechanical obstacle to the student authoring the cross-modal
+  confounder set; keep the design and labels the student's own (D-028).
+
+### Completed work
+- `run_t6 --judge {rule,ollama}` (default unchanged) — enables the two-judge
+  confounder experiment; the rule judge is structurally blind to
+  combination-only harm, llama3 reads evidence jointly.
+- `confounders_TEMPLATE.json` (12 empty CF slots) + `README_confounders.md`
+  (concept per Kiela et al. 2020, validity property, four combination
+  patterns, ethics rails, two-judge protocol + BLIP-caption caveat).
+- `scripts/make_confounder_media.py` (TTS + own-photo import with EXIF strip)
+  and `scripts/check_confounders.py` (pre-merge validator; verified against
+  good and deliberately broken items).
+
+### Tests/evidence produced
+- Fast suites unchanged: 49/10 (WSL), 37/11 (offline). Toolkit smoke: TTS wav
+  + metadata-stripped PNG produced.
+
+### Next steps
+- Student: design 8–12 confounder cases, produce media, fill template, run
+  the validator, merge into manifest v3, re-run T6 twice (rule / ollama),
+  compare cross_modal recall. Then T7 usefulness ratings.

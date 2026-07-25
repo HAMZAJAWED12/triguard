@@ -705,3 +705,48 @@ corrupt upload -> mock+`decode_error` for that request then next image still
 `committed: false` on /eval/summary and cleanly restored after removal;
 stream healthy (89 tokens, final `ollama`). Schemas and judge contract
 untouched.
+
+## Decision 028: Confounder-set infrastructure + run_t6 --judge variant
+Date: 2026-07-25
+Status: accepted (infrastructure only — the cases themselves are pending and
+are the student's own work)
+
+Context: The T6 `cross_modal_ablation` table — the thesis metric — is still
+empty (D-022, D-026). The final report window is the time to fill it. Design
+insight that shapes the experiment: the rule judge scores modalities
+independently (+0.15 only when two already fired), so it is structurally
+blind to harm that emerges purely from combination; the llama3 judge reads
+the evidence jointly and may catch it. The scientifically interesting run is
+therefore confounders under BOTH judges.
+Decision: Build the scaffolding, keep authorship with the student:
+ - `run_t6.py --judge {rule,ollama}` (default rule — existing behaviour and
+   committed runs unchanged; config.judge now records the argument).
+ - `data/sample_inputs/triguard_eval_v1/confounders_TEMPLATE.json` — 12 empty
+   CF slots (cross_modal: true, all content/labels null, per-item
+   design_note) explicitly marked TEMPLATE, never loaded by the harness.
+ - `README_confounders.md` — the confounder concept (Kiela et al. 2020
+   benign-confounder design), the manifest-level validity property
+   (combination harmful, every supplied modality alone safe), four
+   combination patterns from the literature, ethics rails (benign self-made/
+   public-domain media only, no faces, EXIF stripped, nothing gitignored),
+   and the two-judge experiment protocol incl. the honest caveat that BLIP's
+   caption may destroy the visual half of a pairing before any judge sees it.
+ - `scripts/make_confounder_media.py` — benign media toolkit: espeak-ng TTS
+   clips (same provenance as audio_test.wav) and own-photo import with
+   resize + EXIF/metadata strip. Media lands in
+   `data/sample_inputs/confounders/` (committable because benign).
+ - `scripts/check_confounders.py` — pre-merge validator: structure, labels,
+   >=2 modalities, unimodal-safe confounder property, media existence, no
+   gitignored references, id collisions vs manifest.json, design_note
+   present. Verified: good item passes; a deliberately bad item trips all
+   eight problem classes; empty template exits 1.
+Reason: the empty table is the report's biggest gap; infrastructure removes
+every mechanical obstacle while the intellectual contribution (cases,
+wording, media selection, labels) stays demonstrably the student's, matching
+the D-022/D-026 provenance discipline.
+Impact: run_t6 judge-threading (default unchanged), two scripts, template +
+README. Fast suites unchanged: 49 passed / 10 skipped (WSL), 37 passed / 11
+skipped (offline). Toolkit smoke: TTS wav 77,840 bytes written; photo import
+re-encoded to metadata-free PNG. Next: student authors 8-12 cases, validator
+green, merge into manifest.json v3 with updated provenance, re-run T6 rule +
+ollama, compare `cross_modal_ablation.recall_by_condition`.

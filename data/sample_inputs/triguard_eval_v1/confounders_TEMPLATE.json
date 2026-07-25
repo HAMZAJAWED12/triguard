@@ -1,0 +1,127 @@
+{
+  "schema_version": "1",
+  "provenance": "TEMPLATE ONLY - not evaluation data. Slots for the author's cross-modal confounder cases. Fill every null, delete unused slots, then merge into manifest.json items. The design, wording, media choice and ALL labels are the author's own work; validate with scripts/check_confounders.py before merging.",
+  "description": "Cross-modal confounder slots: each modality benign on its own, the COMBINATION harmful. label = overall ground truth for the combination; unimodal_labels = ground truth for each part alone (these should mostly be 'safe' - that is what makes it a confounder).",
+  "items": [
+    {
+      "id": "CF1",
+      "label": null,
+      "cross_modal": true,
+      "text": null,
+      "image": null,
+      "audio": null,
+      "unimodal_labels": { "text": null, "image": null, "audio": null },
+      "design_note": "REPLACE: one sentence on why the combination is harmful while each part is benign"
+    },
+    {
+      "id": "CF2",
+      "label": null,
+      "cross_modal": true,
+      "text": null,
+      "image": null,
+      "audio": null,
+      "unimodal_labels": { "text": null, "image": null, "audio": null },
+      "design_note": null
+    },
+    {
+      "id": "CF3",
+      "label": null,
+      "cross_modal": true,
+      "text": null,
+      "image": null,
+      "audio": null,
+      "unimodal_labels": { "text": null, "image": null, "audio": null },
+      "design_note": null
+    },
+    {
+      "id": "CF4",
+      "label": null,
+      "cross_modal": true,
+      "text": null,
+      "image": null,
+      "audio": null,
+      "unimodal_labels": { "text": null, "image": null, "audio": null },
+      "design_note": null
+    },
+    {
+      "id": "CF5",
+      "label": null,
+      "cross_modal": true,
+      "text": null,
+      "image": null,
+      "audio": null,
+      "unimodal_labels": { "text": null, "image": null, "audio": null },
+      "design_note": null
+    },
+    {
+      "id": "CF6",
+      "label": null,
+      "cross_modal": true,
+      "text": null,
+      "image": null,
+      "audio": null,
+      "unimodal_labels": { "text": null, "image": null, "audio": null },
+      "design_note": null
+    },
+    {
+      "id": "CF7",
+      "label": null,
+      "cross_modal": true,
+      "text": null,
+      "image": null,
+      "audio": null,
+      "unimodal_labels": { "text": null, "image": null, "audio": null },
+      "design_note": null
+    },
+    {
+      "id": "CF8",
+      "label": null,
+      "cross_modal": true,
+      "text": null,
+      "image": null,
+      "audio": null,
+      "unimodal_labels": { "text": null, "image": null, "audio": null },
+      "design_note": null
+    },
+    {
+      "id": "CF9",
+      "label": null,
+      "cross_modal": true,
+      "text": null,
+      "image": null,
+      "audio": null,
+      "unimodal_labels": { "text": null, "image": null, "audio": null },
+      "design_note": null
+    },
+    {
+      "id": "CF10",
+      "label": null,
+      "cross_modal": true,
+      "text": null,
+      "image": null,
+      "audio": null,
+      "unimodal_labels": { "text": null, "image": null, "audio": null },
+      "design_note": null
+    },
+    {
+      "id": "CF11",
+      "label": null,
+      "cross_modal": true,
+      "text": null,
+      "image": null,
+      "audio": null,
+      "unimodal_labels": { "text": null, "image": null, "audio": null },
+      "design_note": null
+    },
+    {
+      "id": "CF12",
+      "label": null,
+      "cross_modal": true,
+      "text": null,
+      "image": null,
+      "audio": null,
+      "unimodal_labels": { "text": null, "image": null, "audio": null },
+      "design_note": null
+    }
+  ]
+}
