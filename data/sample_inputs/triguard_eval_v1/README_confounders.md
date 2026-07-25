@@ -28,10 +28,17 @@ yours to invent):
    pairing creates mockery, threat or targeting.
 2. **Image gives a target to generic text** — text with no target ("people
    like this should not exist") + photo identifying a group or person.
-3. **Audio tone recontextualises text/image** — calm words whose pairing with
-   a specific sound or spoken phrase changes intent.
-4. **Instruction + object** — innocuous imperative text + image of an object
+3. **Instruction + object** — innocuous imperative text + image of an object
    that together read as a threat or harmful instruction.
+4. **Spoken words recontextualise text/image** — a TTS clip whose WORDING
+   changes the meaning of the paired modality.
+
+**Audio rail (important):** "tone of voice" does NOT work here. espeak output
+is monotone; YAMNet tags acoustic events, not delivery; Whisper keeps only
+the words. Prosody never reaches the judge — an audio confounder must carry
+its recontextualisation in the transcript wording itself (pattern 4), or use
+a YAMNet-taggable event. Design most items on patterns 1–3; use audio only
+where the words do the work.
 
 ## Hard rules (ethics + repo)
 
@@ -43,7 +50,9 @@ yours to invent):
   and committable. If an item needs shocking media to work, redesign it.
 - Committed media lives in `data/sample_inputs/confounders/`. Nothing from
   `data/local_demo/` or `data/t3_samples/` may be referenced.
-- 8–12 items is enough; balance patterns 1–4 rather than repeating one trick.
+- **Fill all 12 slots if you can.** At n=8 every miss moves recall by 12.5
+  percentage points; n=12 makes the numbers meaningfully less noisy. Balance
+  patterns rather than repeating one trick.
 
 ## Workflow
 
@@ -54,19 +63,33 @@ yours to invent):
    - TTS clip: `--tts "the exact words to speak" --out cf1_calm_words.wav`
    - Own photo: `--import path/to/photo.jpg --out cf2_object.png`
      (resizes, converts, strips EXIF)
-3. Fill `confounders_TEMPLATE.json` — every `null`, delete unused slots.
-4. Validate: `python scripts/check_confounders.py` (structure, media exists,
+3. **BLIP pre-flight — before an image earns a slot**, caption it alone and
+   keep the pairing only if the harm-carrying object survives in the one-line
+   caption (WSL, models cached after first use):
+
+   ```
+   USE_TF=0 PYTHONPATH=src ~/.venv-tri/bin/python \
+     scripts/make_confounder_media.py --caption data/sample_inputs/confounders/cf2_object.png
+   ```
+
+   If the caption drops the object your pairing depends on, the item is dead
+   on arrival — discard or re-shoot before it costs a slot.
+4. Fill `confounders_TEMPLATE.json` — every `null`, delete unused slots.
+5. Validate: `python scripts/check_confounders.py` (structure, media exists,
    confounder property, id collisions vs manifest.json).
-5. Merge the filled items into `manifest.json`'s `items` array, update the
+6. Merge the filled items into `manifest.json`'s `items` array, update the
    manifest `provenance` (your authorship statement + date), bump the
    `description`.
-6. Re-run T6 twice and compare — this is the experiment:
+7. **COMMIT the merged manifest BEFORE the first T6 run on it.** The git
+   timestamp is your label-freeze evidence: ground truth fixed before any
+   prediction was seen. Cite the commit hash in the report's method section.
+8. Re-run T6 twice and compare — this is the experiment:
    - rule judge (expected to miss most confounders — it scores modalities
      independently and only boosts when two already fired):
      `USE_TF=0 TRIGUARD_TEXT_BACKEND=hf TRIGUARD_IMAGE_BACKEND=blip TRIGUARD_AUDIO_BACKEND=real PYTHONPATH=src ~/.venv-tri/bin/python -m triguard.evaluation.run_t6`
    - llama3 judge (sees the evidence jointly; the interesting condition):
      same command + `--judge ollama` (Ollama must be running; OLLAMA_TIMEOUT=300)
-7. Read `cross_modal_ablation.recall_by_condition` in the two results.json
+9. Read `cross_modal_ablation.recall_by_condition` in the two results.json
    files. Both outcomes are report-worthy: llama3 > rule on confounders
    demonstrates the thesis; both low is an honest architectural finding about
    evidence-summary judges (the judge only sees wrapper OUTPUTS — a benign

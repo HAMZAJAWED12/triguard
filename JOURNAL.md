@@ -605,3 +605,33 @@
 - Student: design 8–12 confounder cases, produce media, fill template, run
   the validator, merge into manifest v3, re-run T6 twice (rule / ollama),
   compare cross_modal recall. Then T7 usefulness ratings.
+
+---
+
+## Week 19c — Two-judge T6 baseline + design rails
+### Planned work
+- Run the new `--judge` variant on the v2 set as a pre-confounder baseline;
+  add the review rails to the confounder guide.
+
+### Completed work
+- Two T6 runs on the v2 set (D-029): rule (`20260725-191000`) and llama3
+  (`20260725-191055`). Analysed via confusion matrices, not headlines.
+- README rails: audio confounders must carry meaning in transcript WORDING
+  (espeak is monotone, YAMNet tags events, Whisper keeps words — prosody
+  never reaches the judge); BLIP pre-flight before an image earns a slot;
+  fill all 12 slots; commit the manifest BEFORE the first run (label freeze).
+- `--caption` pre-flight mode in the media toolkit; `show_t6_cross_modal.py`
+  viewer (replaces a fragile PowerShell→bash→python one-liner).
+
+### Problems encountered
+- Judge accuracy comparison is misleading at the unimodal level: both judges
+  answer with a single constant class there (rule → safe, llama3 →
+  borderline), so the "gap" is an artefact. Only the multimodal row carries
+  a real finding.
+
+### Tests/evidence produced
+- Fast suites unchanged (49/10 WSL, 37/11 offline). Both T6 runs committed.
+  `cross_modal_ablation` still empty — awaiting the author's cases.
+
+### Next steps
+- Confounder cases; repeat the ollama condition for stability; T7 ratings.

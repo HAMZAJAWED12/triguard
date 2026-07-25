@@ -750,3 +750,37 @@ skipped (offline). Toolkit smoke: TTS wav 77,840 bytes written; photo import
 re-encoded to metadata-free PNG. Next: student authors 8-12 cases, validator
 green, merge into manifest.json v3 with updated provenance, re-run T6 rule +
 ollama, compare `cross_modal_ablation.recall_by_condition`.
+
+## Decision 029: T6 v2 two-judge comparison (rule vs llama3) — baseline before confounders
+Date: 2026-07-25
+Status: accepted (evidence record)
+
+Context: `run_t6 --judge` (D-028) made a like-for-like judge comparison
+possible. Running it on the v2 set BEFORE the confounder cases exist gives a
+baseline for the confounder experiment and is itself a report finding.
+Runs (both real hf+blip+real-audio, n=24, class balance 10/6/8):
+ - rule: `outputs/evaluation/20260725-191000/t6/` — multimodal acc 0.625 /
+   macro-F1 0.4945; image-only 0.5 / 0.2222; audio-only 0.5 / 0.2222;
+   text-only 0.5909 / 0.4786.
+ - ollama (llama3): `outputs/evaluation/20260725-191055/t6/` — multimodal acc
+   0.4583 / macro-F1 0.4722; image-only 0.25 / 0.1333; audio-only 0.1667 /
+   0.0952; text-only 0.5909 / 0.4883.
+Honest reading (from the committed confusion matrices, not the headline
+accuracies): in the UNIMODAL conditions both judges are degenerate — the rule
+judge predicts `safe` for all 8 image-only and all 6 audio-only items, llama3
+predicts `borderline` for all of them. Neither discriminates on benign
+committed media; the accuracy gap there only reflects which constant answer
+matches more labels, and must NOT be reported as capability. The multimodal
+row is the substantive one: the rule judge gets 10/10 safe, 0/6 borderline,
+5/8 harmful; llama3 gets 5/10 safe, 2/6 borderline, 4/8 harmful. llama3
+recovers part of the borderline band that the rule judge's 0.35 threshold
+structurally misses (2 vs 0) and pays for it with false positives on benign
+items (5/10 safe items flagged borderline) — a precision/recall trade with a
+mechanism, not noise.
+Caveat for the report: n=24, single llama3 run; temperature 0 but generation
+is not bit-reproducible across model loads. Repeat the ollama condition
+before quoting the multimodal delta as stable.
+Impact: evidence only; no code change. `cross_modal_ablation` remains empty
+in both runs (`n_cross_modal_harmful: 0`) — it populates only when the
+author's confounder cases are merged into the manifest (D-028 workflow).
+Viewer added for these comparisons: `scripts/show_t6_cross_modal.py`.
