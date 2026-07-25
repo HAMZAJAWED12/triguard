@@ -44,6 +44,13 @@ def _ollama_model() -> str:
         or _DEFAULT_OLLAMA_MODEL
     )
 
+
+def _ollama_keep_alive() -> str:
+    """How long Ollama keeps the model resident after a call (request-body
+    parameter only — the judge contract is untouched). Default 30m so a demo
+    doesn't hit a 30-50s reload after Ollama's 5-minute idle unload."""
+    return os.getenv("TRIGUARD_OLLAMA_KEEP_ALIVE", "30m")
+
 # Prompt used in production (Ollama path).
 JUDGE_PROMPT_TEMPLATE = """You are a content-moderation judge. Read the evidence below
 and return ONE JSON object that conforms exactly to this schema:
@@ -234,6 +241,7 @@ def _judge_via_ollama(input_: JudgeInput) -> JudgeOutput:
 def _ollama_generate(prompt: str) -> str:
     body = json.dumps(
         {"model": _ollama_model(), "prompt": prompt, "stream": False,
+         "keep_alive": _ollama_keep_alive(),
          "options": {"temperature": 0.0}}
     ).encode("utf-8")
     req = urllib.request.Request(
@@ -258,6 +266,7 @@ def _ollama_generate_stream(prompt: str) -> Iterator[str]:
     """
     body = json.dumps(
         {"model": _ollama_model(), "prompt": prompt, "stream": True,
+         "keep_alive": _ollama_keep_alive(),
          "options": {"temperature": 0.0}}
     ).encode("utf-8")
     req = urllib.request.Request(

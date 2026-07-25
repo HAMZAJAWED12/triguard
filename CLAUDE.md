@@ -12,8 +12,10 @@ Read it before changing anything.
 - **One-line description:** A prototype multimodal, explainable, locally
   deployable content-moderation pipeline that combines pre-trained text,
   image and audio models with a local LLM judge.
-- **Status:** Tier-A prototype shipped. Preliminary Report submitted.
-  Next phase: Tier-B (real BLIP / Whisper / YAMNet / Ollama).
+- **Status:** Tier-B shipped — real toxic-bert / BLIP(+OCR) / Whisper+YAMNet /
+  llama3-via-Ollama behind feature flags, offline mock defaults intact.
+  Evaluation tracks T1–T8 committed. Phase D demo (presets, compare, streaming,
+  dashboard) shipped. Phase E: draft report in progress (student prose).
 
 ## Operating rules
 
@@ -57,16 +59,16 @@ Read it before changing anything.
 
 | Component | Status |
 |---|---|
-| Pydantic schemas | Real, enforced |
-| Text wrapper | **Real** (sklearn TF-IDF + logistic regression) with auto-fallback to mock heuristic if sklearn import fails |
-| Image wrapper | Mock (deterministic cues from filename) |
-| Audio wrapper | Mock (deterministic cues from filename) |
-| LLM judge — rule-based path | **Real**, deterministic, schema-valid |
-| LLM judge — Ollama path | **Implemented**, falls back to rule on network failure; not exercised in CI |
-| Orchestrator | Real, with retry-on-invalid-JSON and graceful wrapper-failure handling |
-| CLI | Real |
-| Evaluation harness (T1 + T5 + T6 mini) | Real |
-| FastAPI demo | Not implemented yet |
+| Pydantic schemas | Real, enforced, frozen |
+| Text wrapper | **Real**: sklearn TF-IDF+LR (offline default) + opt-in `unitary/toxic-bert` (`TRIGUARD_TEXT_BACKEND=hf`); mock via `TRIGUARD_MOCK=1` |
+| Image wrapper | Mock default; **real BLIP** opt-in (`TRIGUARD_IMAGE_BACKEND=blip`) + opt-in RapidOCR (`TRIGUARD_IMAGE_OCR=1`) |
+| Audio wrapper | Mock default; **real Whisper + YAMNet** opt-in (`TRIGUARD_AUDIO_BACKEND=real`), per-component fallback |
+| LLM judge — rule-based path | **Real**, deterministic, schema-valid, offline default |
+| LLM judge — Ollama path | **Real** (llama3-8B, opt-in), streaming variant for the demo, falls back to rule with honest `ollama->rule` label |
+| Orchestrator | Real; retry-on-invalid-JSON, wrapper-failure shielding, honest `model_versions` |
+| CLI | Real (`--judge` accepted before or after the subcommand) |
+| Evaluation harnesses | Real: T1–T8 + failure analysis; committed evidence under `outputs/evaluation/` |
+| FastAPI demo | **Real**: `/ui` (presets, rule-vs-llama3 compare, SSE streaming), `/dashboard` (verbatim eval numbers) |
 
 Replacing a mock with a real component must use a feature flag, must keep
 the existing tests green and must add a `slow` test for the real path.

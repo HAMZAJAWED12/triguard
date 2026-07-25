@@ -41,9 +41,6 @@ data/t3_samples/
 study/
 triguard-backup.bundle
 
-study/
-triguard-backup.bundle
-
-study/
-triguard-backup.bundle
-data/t4_samples/
+# local working copies / session artifacts
+docs/figures.zip
+.claude/scheduled_tasks.lock

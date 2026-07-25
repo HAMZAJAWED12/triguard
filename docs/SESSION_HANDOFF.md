@@ -11,11 +11,17 @@ branch `master`. The old OneDrive copy
 EXCEPT its `.venv` is still the Windows offline interpreter (see below).
 
 Latest commits (newest first):
+- (pending) fix(demo): demo-readiness — un-latch per-request wrapper failures, demo_up.sh, health backends, uncommitted-run badge, docs refresh
+- `a8f2bb2` docs(report): S1-S4 demo/dashboard screenshots, frontmatter template, real-backend launch config
+- `9e2c0e8` docs(report): draft-report skeleton, evidence tables E1-E9, figures (Phase E scaffolding)
+- `33ade3d` docs: numbers audit (195 claims, 0 numeric errors) + T7 wording, D-025/026 ordering, test env isolation
 - `6bfdfc3` feat(eval): T6 v2 student-reviewed set (D-026) + gitignored local_demo preset media
 - `e866541` feat(demo): Phase D - presets, rule-vs-llama3 compare, streaming judge, eval dashboard (D-025)
-- `c8f22a8` feat(eval): failure analysis + T7 grounding + T8 perf (Phase C)
-- `3bc03cc` feat(image): opt-in OCR (RapidOCR) + T3 OCR->text +0.37 F1 (Phase B)
-- earlier: T6 harness (Phase A), FastAPI demo, model_versions fix, combined venv, real Ollama judge, T2/T3/T4.
+- earlier: Phase C eval utilities, Phase B OCR, Phase A T6 harness, FastAPI demo, combined venv, real judges, T2/T3/T4.
+
+Demo boot: `bash scripts/demo_up.sh` (WSL) — orphan cleanup, Ollama start, llama3
++ perception warm-up, real server on :8006, green/red checklist. USE_TF=0 is baked
+in. CONTEXT_HANDOFF.md deleted (was stale; this file is the only handoff).
 
 ## Environments (CRITICAL)
 Windows torch is blocked (WDAC). Real ML runs only in WSL.

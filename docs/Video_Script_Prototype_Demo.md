@@ -1,5 +1,12 @@
 # Prototype Demonstration Video — Script & Shot List
 
+> **HISTORICAL (preliminary-report video, Tier-A era).** Counts and shots below
+> describe the mock-pipeline prototype as submitted then (e.g. "23 passed" —
+> the suite is now 45/10 WSL, 33/11 offline). The FINAL demo flows through the
+> server UI instead: boot with `bash scripts/demo_up.sh`, then /ui presets →
+> rule-vs-llama3 compare → llama3 streaming → /dashboard. Write a new shot list
+> for the final video; keep this file as the preliminary record.
+
 **Project:** CM3070 Preliminary Report — TriGuard
 **Length target:** 3–5 minutes (script ≈ 600 words ≈ 4 min 15 s at 140 wpm)
 **Voiceover:** Hamza (own voice, no AI/speed manipulation per brief)

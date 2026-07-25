@@ -525,9 +525,13 @@ Key mechanics:
 Run (WSL, offline defaults):
 
 ```bash
-PYTHONPATH=src ~/.venv-tri/bin/uvicorn triguard.api.main:app --host 127.0.0.1 --port 8001
+# real backends need USE_TF=0 (D-016 segfault guard); demo_up.sh does all of this
+USE_TF=0 TRIGUARD_TEXT_BACKEND=hf TRIGUARD_IMAGE_BACKEND=blip \
+TRIGUARD_AUDIO_BACKEND=real TRIGUARD_IMAGE_OCR=1 OLLAMA_TIMEOUT=300 \
+PYTHONPATH=src ~/.venv-tri/bin/uvicorn triguard.api.main:app --host 127.0.0.1 --port 8006
 # /ui — presets + judge-mode selector (single / compare / stream llama3)
 # /dashboard — committed T2–T8 numbers
+# pre-demo ritual (orphan cleanup + ollama + warm-up + checklist): bash scripts/demo_up.sh
 ```
 
 Tests: `tests/test_llm_judge_stream.py` (offline unit: unreachable-host

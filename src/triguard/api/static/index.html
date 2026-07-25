@@ -76,6 +76,7 @@
     <p class="sub">Submit text, an image and/or an audio clip. TriGuard returns a
       <strong>recommended</strong> decision for a human reviewer — it does not moderate automatically.</p>
     <nav class="top"><a href="/dashboard">Evaluation dashboard →</a></nav>
+    <p id="backendLine" class="muted" hidden></p>
 
     <section class="presets" id="presets" hidden>
       <h2>Presets (committed sample inputs)</h2>
@@ -293,6 +294,22 @@
       } catch (_) { /* presets are optional decoration */ }
     }
     loadPresets();
+
+    // Which server am I on? Read the effective backend config from /.
+    (async () => {
+      try {
+        const h = await (await fetch('/')).json();
+        const b = h.backends || {};
+        const allMock = ['text','image','audio'].every(k => (b[k]||'mock') === 'mock');
+        const line = document.getElementById('backendLine');
+        line.textContent = 'server backends: text=' + (b.text||'?') + ' · image=' + (b.image||'?')
+          + ' · audio=' + (b.audio||'?') + (b.ocr ? ' · OCR on' : '')
+          + ' · default judge=' + (h.judge_default||'rule')
+          + (allMock ? '  —  MOCK MODE (offline demo)' : '');
+        if (allMock) line.style.fontWeight = '600';
+        line.hidden = false;
+      } catch (_) { /* banner is optional */ }
+    })();
 
     f.addEventListener('submit', async (e) => {
       e.preventDefault();

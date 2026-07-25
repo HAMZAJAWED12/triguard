@@ -78,10 +78,26 @@ class TextRequest(BaseModel):
     text: str
 
 
+def _truthy(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in {"1", "true", "yes"}
+
+
 @app.get("/")
 def health() -> dict:
-    """Liveness + version."""
-    return {"status": "ok", "version": VERSION}
+    """Liveness + version + the effective backend config (mock vs real at a
+    glance — plain informational dict, not part of any frozen schema)."""
+    mock = _truthy("TRIGUARD_MOCK")
+    return {
+        "status": "ok",
+        "version": VERSION,
+        "backends": {
+            "text": "mock" if mock else os.getenv("TRIGUARD_TEXT_BACKEND", "sklearn"),
+            "image": "mock" if mock else os.getenv("TRIGUARD_IMAGE_BACKEND", "mock"),
+            "audio": "mock" if mock else os.getenv("TRIGUARD_AUDIO_BACKEND", "mock"),
+            "ocr": _truthy("TRIGUARD_IMAGE_OCR"),
+        },
+        "judge_default": os.getenv("TRIGUARD_JUDGE", "rule"),
+    }
 
 
 @app.get("/ui")
@@ -100,9 +116,16 @@ def analyse_text(req: TextRequest) -> dict:
 
 
 def _save_upload(upload: UploadFile) -> str:
-    """Persist an upload to a temp file; return its path (caller must unlink)."""
-    suffix = Path(upload.filename or "").suffix
-    fd, path = tempfile.mkstemp(suffix=suffix)
+    """Persist an upload to a temp file; return its path (caller must unlink).
+
+    The original filename STEM is kept in the temp name (sanitised): the mock
+    wrappers derive cues/captions from the filename, so an upload named
+    weapon_photo.png must not become tmp9gv2j7y.png.
+    """
+    original = Path(upload.filename or "")
+    stem = "".join(c if c.isalnum() or c in "-_" else "_"
+                   for c in original.stem)[:60] or "upload"
+    fd, path = tempfile.mkstemp(prefix=f"{stem}__", suffix=original.suffix)
     with os.fdopen(fd, "wb") as f:
         f.write(upload.file.read())
     return path
@@ -416,6 +439,27 @@ def _trim_track(track: str, data: dict) -> dict:
     return out
 
 
+def _uncommitted_eval_paths() -> Optional[set[str]]:
+    """Repo-relative POSIX paths under outputs/evaluation that git does not
+    track (untracked or modified). None when git is unavailable — callers then
+    omit the committed flag rather than guessing."""
+    import subprocess
+    try:
+        proc = subprocess.run(
+            ["git", "status", "--porcelain", "--", "outputs/evaluation"],
+            cwd=_REPO_ROOT, capture_output=True, text=True, timeout=10,
+        )
+        if proc.returncode != 0:
+            return None
+        paths: set[str] = set()
+        for line in proc.stdout.splitlines():
+            if len(line) > 3:
+                paths.add(line[3:].strip().strip('"'))
+        return paths
+    except Exception:
+        return None
+
+
 @app.get("/eval/summary")
 def eval_summary() -> dict:
     """Headline numbers of the latest committed run per evaluation track.
@@ -432,6 +476,7 @@ def eval_summary() -> dict:
     tracks: dict[str, dict] = {}
     t2_by_backend: dict[str, dict] = {}
     t8_by_config: dict[str, dict] = {}
+    uncommitted = _uncommitted_eval_paths()
 
     for run_dir in sorted(p for p in _EVAL_DIR.iterdir() if p.is_dir()):
         for track_dir in sorted(p for p in run_dir.iterdir() if p.is_dir()):
@@ -444,11 +489,17 @@ def eval_summary() -> dict:
                 log.warning("skipping unreadable %s: %s", results, e)
                 continue
             track = str(data.get("track", track_dir.name)).lower()
+            rel = results.relative_to(_REPO_ROOT).as_posix()
             entry = {
                 "run": run_dir.name,
-                "file": results.relative_to(_REPO_ROOT).as_posix(),
+                "file": rel,
                 "data": _trim_track(track, data),
             }
+            if uncommitted is not None:
+                entry["committed"] = not any(
+                    rel == u or rel.startswith(u.rstrip("/") + "/")
+                    for u in uncommitted
+                )
             if track == "t2":
                 backend = (data.get("config", {}).get("backend")
                            or ("sklearn" if "sklearn" in str(

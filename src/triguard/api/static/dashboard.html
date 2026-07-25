@@ -77,6 +77,10 @@
         const kv = Object.keys(cfg).map(k => `${k}=${cfg[k]}`).join(', ');
         h += `<p class="src">config: ${esc(kv)}</p>`;
       }
+      if (entry.committed === false)
+        h += `<div class="warn">UNCOMMITTED RUN — this results file is not committed to git
+              (rehearsal/scratch output?). It is NOT part of the project's recorded evidence;
+              remove it or commit it deliberately.</div>`;
       return h;
     }
 
@@ -154,8 +158,8 @@
       names.forEach((n,i)=>{ if (conds[n]) h += bar(n.replace('_',' '), conds[n].macro_f1, 1, n==='multimodal'?'':'b2'); });
       const cm = d.cross_modal_ablation;
       if (cm && cm.n_cross_modal_harmful === 0)
-        h += `<div class="warn">cross-modal confounder items: 0 — the thesis-proving confounder
-              cases and labels are the student's own work and are not yet in this set.</div>`;
+        h += `<div class="warn">cross-modal confounder items: 0 —
+              ${esc(cm.note || 'the cross-modal ablation table is empty for this set')}.</div>`;
       h += lims(d.limitations) + '</section>';
       return h;
     }

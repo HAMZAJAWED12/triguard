@@ -548,3 +548,33 @@
 ### Next steps
 - Phase E: report skeleton + evidence tables once the CM3070 spec + module
   AI-level statement are supplied.
+
+---
+
+## Week 19 — Demo-readiness hardening (pre-video audit)
+### Planned work
+- Full-codebase audit before the FYP demo: find anything that could break or
+  embarrass a live run; fix on approval.
+
+### Completed work
+- Audit (multi-agent + live reproduction) confirmed 4 demo-breakers; all fixed
+  (D-027): per-request decode failures no longer latch BLIP/Whisper/YAMNet off;
+  `USE_TF=0` added to every documented real command (missing guard segfaulted
+  the server — reproduced); `scripts/demo_up.sh` one-command pre-demo ritual;
+  llama3 `keep_alive` (30m) ends idle-unload dead air.
+- Surface: health endpoint + /ui banner show effective backends (mock vs real
+  at a glance); /eval/summary flags uncommitted (rehearsal) runs and the
+  dashboard warns on them; upload filenames keep their stem (mock cues work);
+  CLI takes `--judge` after the subcommand + friendly errors.
+- Hygiene: README truncation repaired, CLAUDE.md real-vs-mock table rewritten,
+  CONTEXT_HANDOFF.md deleted, .gitignore deduped, session lock untracked,
+  preliminary video script marked historical.
+
+### Tests/evidence produced
+- Fast suites 49 passed / 10 skipped (WSL), 37 passed / 11 skipped (offline);
+  +4 latch regression tests. Live: demo_up.sh ALL GREEN; corrupt-then-good
+  upload keeps BLIP real; injected uncommitted run flagged on the dashboard;
+  stream 89 tokens -> final `ollama`.
+
+### Next steps
+- Record the final demo video off demo_up.sh; finish the final report.

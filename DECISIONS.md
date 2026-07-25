@@ -663,3 +663,45 @@ because several v2 borderline items are mild negative opinions that
 toxic-bert scores below the rule judge's 0.35 borderline threshold — the
 borderline class drives the drop. That is a finding about the pipeline's
 recall on mild incivility, not a defect in the set; report-worthy.
+
+## Decision 027: Demo-readiness hardening (audit-driven)
+Date: 2026-07-25
+Status: accepted
+
+Context: A pre-demo audit (multi-agent + live verification) confirmed four
+demo-breakers and a set of embarrassments: (1) any per-file decode failure
+latched the real BLIP tier off for the whole server session (`_BLIP_BROKEN`
+set inside the same try as the per-request image open; missing-media presets
+triggered it too; Whisper/YAMNet had the same latent pattern); (2) the
+documented real-mode server commands lacked the `USE_TF=0` guard and
+segfaulted at the first toxic-bert call (reproduced); (3) Ollama has no
+autostart, so a pre-demo reboot silently degraded every llama3 segment to
+`ollama->rule`; (4) llama3 unloads after ~5 idle minutes causing 30-50 s of
+mid-demo dead air.
+Decision: Split model-load (latching) from per-request work in
+`image_model.py` / `audio_model.py` — a bad file now degrades that request
+only, tagged `raw["decode_error"]`, and the model stays live (4 offline
+regression tests in `tests/test_wrapper_latch.py`). Ollama request bodies
+send `keep_alive` (default 30m, env `TRIGUARD_OLLAMA_KEEP_ALIVE`) — request
+parameter only, judge contract untouched. `_save_upload` keeps the original
+filename stem so mock cues/captions work on uploads. CLI accepts `--judge`
+after the subcommand and prints one-line errors instead of tracebacks. The
+health endpoint reports effective backends + judge default and /ui shows a
+mock/real banner. `/eval/summary` marks each served run committed/uncommitted
+via git and the dashboard warns on uncommitted (rehearsal) runs; the T6
+confounder warning now quotes the results file's own note. New
+`scripts/demo_up.sh` = one-command pre-demo ritual (orphan cleanup, Ollama
+start, llama3 + perception warm-up, real server with `USE_TF=0` +
+`TRIGUARD_IMAGE_OCR=1`, green/red checklist). Docs: USE_TF=0 added to every
+documented real command; README truncation repaired + layout restored;
+CLAUDE.md status/real-vs-mock table rewritten to Tier-B reality; stale
+CONTEXT_HANDOFF.md deleted; `.gitignore` deduped; `.claude/scheduled_tasks.lock`
+untracked; video script marked historical.
+Impact: fast suites 49 passed / 10 skipped (WSL, was 45) and 37 passed / 11
+skipped (offline venv, was 33). Live verification: demo_up.sh ALL GREEN;
+corrupt upload -> mock+`decode_error` for that request then next image still
+`real-blip`; corrupt `weapon_gun_photo.png` upload -> cue-based mock caption
+(no temp-name gibberish); injected uncommitted newest T6 run flagged
+`committed: false` on /eval/summary and cleanly restored after removal;
+stream healthy (89 tokens, final `ollama`). Schemas and judge contract
+untouched.

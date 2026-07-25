@@ -39,14 +39,28 @@ PYTHONPATH=src python -m triguard.cli run data/sample_inputs/sample_harmful.json
 ### FastAPI demo (browser UI)
 
 ```bash
+# offline demo (mock backends, rule judge) — any venv with the [eval] extras
 pip install fastapi uvicorn python-multipart          # (or: pip install -e ".[eval]")
-PYTHONPATH=src uvicorn triguard.api.main:app --host 127.0.0.1 --port 8001
-# open http://127.0.0.1:8001/ui   (health JSON at http://127.0.0.1:8001/)
-# evaluation dashboard: http://127.0.0.1:8001/dashboard
+TRIGUARD_MOCK=1 PYTHONPATH=src uvicorn triguard.api.main:app --host 127.0.0.1 --port 8001
+# open http://127.0.0.1:8001/ui   (health JSON at /,  dashboard at /dashboard)
 ```
 
-Defaults are offline (mock/rule); set `TRIGUARD_TEXT_BACKEND=hf` etc. to opt into
-real models. Binds localhost only. Demo endpoints (Phase D):
+```bash
+# REAL demo (WSL ~/.venv-tri). USE_TF=0 is REQUIRED with real text — without it
+# transformers imports TensorFlow and the first toxic-bert call segfaults the
+# server (D-016). Easiest: the one-command ritual below.
+bash scripts/demo_up.sh
+# ...or by hand:
+USE_TF=0 TRIGUARD_TEXT_BACKEND=hf TRIGUARD_IMAGE_BACKEND=blip \
+TRIGUARD_AUDIO_BACKEND=real TRIGUARD_IMAGE_OCR=1 OLLAMA_TIMEOUT=300 \
+PYTHONPATH=src ~/.venv-tri/bin/uvicorn triguard.api.main:app --host 127.0.0.1 --port 8006
+```
+
+`scripts/demo_up.sh` = pre-demo ritual: clears orphan servers, starts Ollama if
+down, warms llama3 (long keep_alive) and the perception models, then prints a
+green/red checklist. The `/` health endpoint and the banner on `/ui` show which
+backends are active — check them before presenting. Binds localhost only. Demo
+endpoints (Phase D):
 
 | endpoint | purpose |
 |---|---|
@@ -78,6 +92,20 @@ evidence of a run is its `outputs/evaluation/<ts>/t2/results.json`. See
 ```
 triguard/
 ├── README.md                       this file
-├── pyproject.toml
-├── requirements.txt
-├── docs/                           writeups (lit review, design, chapters, 
+├── pyproject.toml                  package metadata + [eval]/[audio] extras
+├── requirements.txt                pinned fast-lane deps
+├── requirements-full.txt           exact pins of the WSL combined venv
+├── CLAUDE.md / DECISIONS.md / JOURNAL.md   working rules, decision log, journal
+├── docs/                           writeups, report scaffolding, figures
+├── data/sample_inputs/             committed benign media + presets + T6 manifest
+├── data/local_demo/                gitignored local demo media (see its README)
+├── src/triguard/
+│   ├── orchestrator/               pipeline + frozen pydantic schemas
+│   ├── models/                     text/image/audio wrappers + LLM judge
+│   ├── data/                       dataset loaders (T2/T3/T4)
+│   ├── evaluation/                 run_eval + T2-T8 harnesses + failure analysis
+│   └── api/                        FastAPI demo (/ui, /dashboard) + static pages
+├── scripts/                        venv builders, smokes, demo_up.sh
+├── tests/                          fast offline lane + slow-marked real paths
+└── outputs/evaluation/<run>/       committed results.json evidence per track
+```

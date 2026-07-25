@@ -149,11 +149,20 @@ def _blip_analyse(image: ImageInput) -> ImageEvidence:
         return _mock_analyse(image)
     try:
         processor, model = _blip()
-        img = _open_image(image)
-    except Exception as e:  # transformers/torch/PIL missing or load failed
+    except Exception as e:  # transformers/torch missing or model load failed
         _BLIP_BROKEN = True
         _log.warning("BLIP unavailable (%s); falling back to mock mode", e)
         return _mock_analyse(image)
+
+    try:
+        img = _open_image(image)
+    except Exception as e:
+        # Bad/undecodable file (corrupt, HEIC, wrong type...): degrade for THIS
+        # request only — the model is fine and must stay live for later images.
+        _log.warning("image decode failed (%s); mock fallback for this file", e)
+        ev = _mock_analyse(image)
+        ev.raw["decode_error"] = str(e)
+        return ev
 
     import torch  # available once BLIP loaded
 

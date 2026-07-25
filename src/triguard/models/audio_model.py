@@ -122,11 +122,15 @@ def _transcribe(wav):
     model_name = os.getenv("TRIGUARD_WHISPER_MODEL", "tiny")
     try:
         model = _whisper(model_name)
-        clip = wav[: _SR * _MAX_SECONDS]
-        result = model.transcribe(clip, fp16=False)
-    except Exception as e:  # whisper/numba/ffmpeg missing or failed
+    except Exception as e:  # whisper/numba/ffmpeg missing or model load failed
         _WHISPER_BROKEN = True
         _log.warning("whisper unavailable (%s); falling back to mock transcript", e)
+        return None
+    try:
+        clip = wav[: _SR * _MAX_SECONDS]
+        result = model.transcribe(clip, fp16=False)
+    except Exception as e:  # this clip only — keep the model live for later calls
+        _log.warning("whisper transcription failed (%s); mock transcript for this clip", e)
         return None
     text = (result.get("text") or "").strip()
     segments = result.get("segments") or []
@@ -161,6 +165,11 @@ def _tag(wav):
         import numpy as np
 
         model, names = _yamnet()
+    except Exception as e:  # tensorflow/tf-hub missing or model load failed
+        _YAMNET_BROKEN = True
+        _log.warning("yamnet unavailable (%s); falling back to mock tags", e)
+        return None
+    try:
         if len(wav) == 0:
             return []
         win = _SR * _MAX_SECONDS
@@ -176,9 +185,8 @@ def _tag(wav):
             for i in order
             if mean[i] > _TAG_THRESHOLD
         ][:_TOP_K]
-    except Exception as e:  # tensorflow/tf-hub missing or failed
-        _YAMNET_BROKEN = True
-        _log.warning("yamnet unavailable (%s); falling back to mock tags", e)
+    except Exception as e:  # this clip only — keep the model live for later calls
+        _log.warning("yamnet tagging failed (%s); mock tags for this clip", e)
         return None
 
 
