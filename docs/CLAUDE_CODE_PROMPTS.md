@@ -6,7 +6,7 @@ prior context, and tells it everything it needs.
 
 ## How to use
 
-1. Open Claude Code in this repo: `cd "E:\OneDrive\ICAEWSOFTWARE\FYP UOL\triguard" && claude`.
+1. Open Claude Code in this repo: `cd C:\dev\triguard && claude`.
 2. Paste **the single prompt** for the task you want done (do not paste the whole file).
 3. Wait for it to finish; verify the acceptance criteria; commit.
 4. Move to the next prompt.

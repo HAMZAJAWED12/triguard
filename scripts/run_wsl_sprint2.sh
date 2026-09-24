@@ -3,7 +3,7 @@
 # Reuses the Sprint-1 .venv-linux (torch already installed). Windows blocks
 # torch DLLs via Application Control; Linux binaries bypass it.
 set -euo pipefail
-cd "/mnt/c/dev/triguard"
+cd "$(dirname "$0")/.."   # repo root, whatever the clone path
 
 . .venv-linux/bin/activate
 pip install "pillow>=10,<12"

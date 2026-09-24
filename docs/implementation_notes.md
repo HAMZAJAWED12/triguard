@@ -539,8 +539,8 @@ fallback, monkeypatched token stream, invalid-JSON fallback) and
 `tests/test_api_phase_d.py` (fast offline: presets, compare + stream against a
 closed port for instant honest fallback, eval-summary equality against the
 committed files, dashboard page; slow: real-ollama compare with the
-reachability double-gate). Fast suite: **45 passed / 10 skipped** (WSL
-`~/.venv-tri`), **33 passed / 11 skipped** (minimal offline venv — the API
+reachability double-gate). Fast suite: **49 passed / 10 skipped** (WSL
+`~/.venv-tri`), **37 passed / 11 skipped** (minimal offline venv — the API
 test files importorskip-skip on fastapi/httpx/python-multipart). Verified live
 with a warm llama3: 98 streamed token events ending in a schema-valid
 `source:"ollama"` verdict; compare rule 0 ms vs llama3 5451 ms on identical

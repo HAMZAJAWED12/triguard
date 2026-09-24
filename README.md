@@ -19,8 +19,8 @@ Tier-A feature prototype — used in Chapter 4 of the Preliminary Report.
 - **Rule-based judge** (default) + real **Ollama/llama3 path** (opt-in), with a
   graceful, honestly-labelled fallback; the demo can stream llama3 tokens live.
 - **Pydantic schemas** enforce a 100 % schema-validity rate by construction.
-- Fast pytest lane is fully offline: **45 passed / 10 skipped** in the full WSL
-  venv; **33 passed / 11 skipped** in the minimal offline venv (API tests skip
+- Fast pytest lane is fully offline: **49 passed / 10 skipped** in the full WSL
+  venv; **37 passed / 11 skipped** in the minimal offline venv (API tests skip
   where `fastapi`/`httpx`/`python-multipart` are absent). `slow` tests need
   `--run-slow`.
 - Evaluation tracks **T1–T8** on public data (Civil Comments, Memotion,

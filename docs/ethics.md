@@ -13,6 +13,8 @@ Expected outcome: **pass** with the following declared conditions:
 
 If the tutor flags any concern, the T7 peer review will be removed from scope and replaced with self-only review.
 
+As run: no peer reviewer was recruited; the T7 usefulness ratings are the author's own single-rater judgement (`scripts/rate_t7.py`), and the deviation is recorded in Table E9 of `docs/report_evidence_tables.md`.
+
 ## Data handling
 
 | Concern | Mitigation |
@@ -20,7 +22,7 @@ If the tutor flags any concern, the T7 peer review will be removed from scope an
 | Unnecessary exposure to harmful content | Hand-built T6 set deliberately uses *mild* examples; no extreme imagery; reviewer-warned before opening folder |
 | Collecting personal data | Not collected. The prototype processes inputs the user voluntarily provides via demo upload |
 | Using real participant data | Not used. All evaluation inputs are public datasets or synthetic |
-| Public datasets | Civil Comments (public); Hateful Memes (gated — access request only); AudioSet (public). Licences logged in `data/README.md` |
+| Public datasets | As used: Civil Comments (CC0-1.0), Memotion / SemEval-2020 Task 8 (research use), LibriSpeech test-clean (CC BY 4.0), ESC-50 (CC BY-NC 3.0). Hateful Memes (gated) and AudioSet (YouTube ids only) were planned but not used — see Table E9. Licences and attributions logged in `data/README.md` |
 | Secure storage | Datasets stored locally only; `.gitignore` excludes raw harmful samples from the repo |
 | Third-party services | None. The whole pipeline runs locally. No outbound API calls except for downloading model weights from HuggingFace at first run |
 | Scraping social media | Not done. Project does not crawl any platform |

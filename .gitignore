@@ -44,3 +44,13 @@ triguard-backup.bundle
 # local working copies / session artifacts
 docs/figures.zip
 .claude/scheduled_tasks.lock
+
+# --- secrets (defensive; none exist today) ---
+.env*
+!.env.example
+*.key
+*.pem
+.netrc
+credentials*
+secrets*
+.claude/settings.local.json

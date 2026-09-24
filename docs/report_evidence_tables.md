@@ -17,6 +17,8 @@ budget — lean on them.
 |---|---|---|
 | fast test lane (full WSL venv) | 45 passed / 10 skipped, offline | pytest run, 2026-07-06 |
 | fast test lane (minimal offline venv) | 33 passed / 11 skipped | pytest run, 2026-07-06 |
+| fast test lane (full WSL venv), after D-027/D-028 | 49 passed / 10 skipped, offline | pytest run, 2026-09-24 |
+| fast test lane (minimal offline venv), after D-027/D-028 | 37 passed / 11 skipped | pytest run, 2026-09-24 |
 | slow-marked real-path tests | 10 (hf, BLIP, OCR, audio, ollama, stream, dataset loaders) | `tests/`, `--run-slow` |
 | schema validity | enforced by construction (pydantic v2 models + validators) | `src/triguard/orchestrator/schemas.py` |
 | graceful degradation chain | real tier -> mock wrapper -> rule judge, each honestly labelled in `model_versions` | D-016, D-019, D-021, D-025 |

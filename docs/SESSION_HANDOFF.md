@@ -7,7 +7,7 @@ state + the non-obvious environment so work resumes without re-discovery.
 ## Location (CHANGED — off OneDrive)
 Repo now at **`C:\dev\triguard`** (WSL **`/mnt/c/dev/triguard`**). Git history intact,
 branch `master`. The old OneDrive copy
-(`C:\Users\jawed\OneDrive\ICAEWSOFTWARE\FYP UOL\triguard`) is stale — do not use it,
+(outside this repo) is stale — do not use it,
 EXCEPT its `.venv` is still the Windows offline interpreter (see below).
 
 Latest commits (newest first):
@@ -28,7 +28,7 @@ Windows torch is blocked (WDAC). Real ML runs only in WSL.
 
 | Env | Python | Use |
 |---|---|---|
-| Windows `.venv` at `C:\Users\jawed\OneDrive\ICAEWSOFTWARE\FYP UOL\triguard\.venv` | — | offline defaults only (mock/sklearn/rule) + pytest + reportlab. Call by ABSOLUTE path. |
+| Windows `.venv` (lives in the old OneDrive checkout, outside this repo; written `<windows-venv>` below) | — | offline defaults only (mock/sklearn/rule) + pytest + reportlab. Call by ABSOLUTE path. |
 | WSL `~/.venv-tri` (py3.12, in $HOME) | 3.12 | **everything real**: torch 2.12.1+cpu, transformers, BLIP, whisper, tensorflow, sklearn, fastapi, jiwer, rapidocr-onnxruntime, psutil |
 | Ollama | — | `$HOME/ollama/bin`, model `llama3:8b-instruct-q4_K_M`, endpoint `localhost:11434` |
 
@@ -42,11 +42,11 @@ Windows torch is blocked (WDAC). Real ML runs only in WSL.
 
 ## Test commands
 ```powershell
-# Windows offline (from any dir): 33 passed / 11 skipped
-$env:PYTHONPATH="C:\dev\triguard\src"; & "C:\Users\jawed\OneDrive\ICAEWSOFTWARE\FYP UOL\triguard\.venv\Scripts\python.exe" -m pytest -q C:\dev\triguard\tests
+# Windows offline (from any dir): 37 passed / 11 skipped
+$env:PYTHONPATH="C:\dev\triguard\src"; & "<windows-venv>\Scripts\python.exe" -m pytest -q C:\dev\triguard\tests
 ```
 ```bash
-# WSL real, fast lane: 45 passed / 10 skipped
+# WSL real, fast lane: 49 passed / 10 skipped
 wsl -e bash -lc "cd /mnt/c/dev/triguard && PYTHONPATH=src ~/.venv-tri/bin/python -m pytest -q"
 # WSL with slow tests (hf/blip/audio/ocr/ollama; needs models/server)
 wsl -e bash -lc "cd /mnt/c/dev/triguard && USE_TF=0 PYTHONPATH=src ~/.venv-tri/bin/python -m pytest -q --run-slow"

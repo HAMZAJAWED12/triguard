@@ -7,7 +7,7 @@
 #
 # Windows .venv and its offline defaults are untouched. CPU wheels only (no CUDA).
 set -euo pipefail
-cd "/mnt/c/dev/triguard"
+cd "$(dirname "$0")/.."   # repo root, whatever the clone path
 
 VENV="$HOME/.venv-tri"
 

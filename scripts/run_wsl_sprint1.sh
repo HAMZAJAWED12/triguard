@@ -3,7 +3,7 @@
 # Windows blocks torch DLLs via Application Control; Linux binaries bypass it.
 # Does NOT touch the Windows .venv or run_eval (Tier-A stays 1.000).
 set -euo pipefail
-cd "/mnt/c/dev/triguard"
+cd "$(dirname "$0")/.."   # repo root, whatever the clone path
 
 # apt deps (python3-venv, python3-pip, ffmpeg) installed manually beforehand.
 [ -d .venv-linux ] || python3 -m venv .venv-linux
