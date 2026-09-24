@@ -54,3 +54,6 @@ docs/figures.zip
 credentials*
 secrets*
 .claude/settings.local.json
+
+# --- local-only mirror of the submitted draft (student text; never publish) ---
+docs/draft_as_submitted/

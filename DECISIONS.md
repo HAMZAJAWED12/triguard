@@ -784,3 +784,37 @@ Impact: evidence only; no code change. `cross_modal_ablation` remains empty
 in both runs (`n_cross_modal_harmful: 0`) — it populates only when the
 author's confounder cases are merged into the manifest (D-028 workflow).
 Viewer added for these comparisons: `scripts/show_t6_cross_modal.py`.
+
+## Decision 030: read-only Markdown mirror of the submitted draft report
+Date: 2026-09-24
+Status: accepted
+
+Context: the graded draft exists only as a .docx outside the repo. Review
+tasks (word-count caps in CLAUDE.md, number-provenance audits against
+`outputs/evaluation/<run>/<track>/results.json`, structure maps) need a
+stable, diffable, line-addressable text form that never edits the source.
+Options: (a) python-docx (absent in both venvs, would add a dependency);
+(b) hand-paste chapters (unstable, error-prone); (c) stdlib zipfile +
+ElementTree walker over `word/document.xml`.
+Decision: (c). `scripts/docx_to_md.py <path.docx> --out <dir>` walks the
+body in order, prefixes every paragraph with `[p<8-hex sha1 of normalised
+text>]` (duplicates get `-2`, `-3` … suffixes), renders Heading1/Heading2 as
+`#`/`##`, keeps captions verbatim with a `{Style}` tag, renders tables as
+Markdown rows under a `[t...]` anchor, splits `ch<N>.md` at Heading1
+`Chapter N`, `frontmatter.md` before it and `references.md` from the
+`References` heading, and writes `wordcount.json` (prose-only and
+prose+table-cell counts per chapter; headings, caption styles, front
+matter and references excluded). Source path is a CLI argument only.
+Reason: zero new dependencies, deterministic anchors let later audits cite
+a paragraph without quoting it, and the mirror is regenerable in one
+command so it cannot drift from the .docx unnoticed.
+Impact: mirror generated under `docs/draft_as_submitted/`, which is
+gitignored and LOCAL-ONLY — the student's report prose must not be published
+before the final report is marked (similarity-checker self-match risk); only
+the tool, its test and the word counts are tracked (regenerate with one
+command). `tests/test_docx_to_md.py` builds a minimal docx in
+`tmp_path` and checks splitting, anchors and counts. Windows fast suite:
+40 passed / 11 skipped (37 + 3 new). Mirror counts from
+`docs/draft_as_submitted/wordcount.json`: prose 6745 words across ch1-ch6
+(ch1 723, ch2 1762, ch3 932, ch4 1236, ch5 1649, ch6 443); prose+tables
+7633. These are mirror measurements, not evaluation numbers.

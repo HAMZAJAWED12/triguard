@@ -68,7 +68,7 @@ Eight tracks, each tied to a design question. All outputs saved under `outputs/e
 - Outputs: confusion matrix per class; per-modality flag accuracy.
 
 ### T7 Rationale quality
-- Two reviewers (self + one peer, if low-risk peer review is approved under CLAUDE.md §20) score each T6 rationale on:
+- Two reviewers (self + one peer, if low-risk peer review is approved under the CLAUDE.md "Datasets and ethics" section) score each T6 rationale on:
     - **Usefulness**: 1 (no help) – 5 (decisive help).
     - **Grounding**: % of rationale sentences that cite at least one piece of structured evidence (regex + manual check).
 - Inter-rater agreement reported (Cohen's κ) if two reviewers are used.
