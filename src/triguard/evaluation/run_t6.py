@@ -130,26 +130,51 @@ def _eval_condition(items: list[T6Item], condition: str,
     }
 
 
-def _cross_modal_recall(items: list[T6Item], results: dict) -> dict:
-    """Recall on cross_modal + harmful items, per condition (the thesis metric)."""
-    targets = [it for it in items if it.cross_modal and it.label == "harmful"]
-    out: dict[str, object] = {"n_cross_modal_harmful": len(targets)}
-    if not targets:
-        out["note"] = ("no cross_modal harmful items in the manifest; add "
-                       "confounder cases to populate this table")
-        return out
-    per_condition = {}
+def _recall_table(targets: list[T6Item], results: dict,
+                  accept: tuple[str, ...]) -> dict:
+    """Per-condition recall over `targets`, counting a prediction in `accept`."""
+    table = {}
     for cond in CONDITIONS:
         preds = results[cond]["_pred"]
-        caught = sum(1 for it in targets
-                     if preds.get(it.id) == "harmful")
+        caught = sum(1 for it in targets if preds.get(it.id) in accept)
         scored = sum(1 for it in targets if it.id in preds)
-        per_condition[cond] = {
+        table[cond] = {
             "scored": scored,
-            "caught_harmful": caught,
+            "caught": caught,
             "recall": round(caught / scored, 4) if scored else None,
         }
-    out["recall_by_condition"] = per_condition
+    return table
+
+
+def _cross_modal_recall(items: list[T6Item], results: dict) -> dict:
+    """Recall on cross_modal items, per condition (the thesis metric).
+
+    Headline = harmful confounders caught as `harmful`. Borderline
+    confounders are reported separately (counted as caught when flagged
+    either `borderline` or `harmful`) so no authored case is silently
+    dropped from the evidence.
+    """
+    harmful = [it for it in items if it.cross_modal and it.label == "harmful"]
+    borderline = [it for it in items
+                  if it.cross_modal and it.label == "borderline"]
+    out: dict[str, object] = {
+        "n_cross_modal_harmful": len(harmful),
+        "n_cross_modal_borderline": len(borderline),
+    }
+    if not harmful and not borderline:
+        out["note"] = ("no cross_modal items in the manifest; add confounder "
+                       "cases to populate this table")
+        return out
+    if harmful:
+        out["recall_by_condition"] = _recall_table(harmful, results,
+                                                   ("harmful",))
+    if borderline:
+        out["borderline_recall_by_condition"] = _recall_table(
+            borderline, results, ("borderline", "harmful"))
+    out["note"] = ("recall_by_condition counts a harmful confounder as caught "
+                   "only when predicted `harmful`; borderline confounders are "
+                   "scored separately and count as caught when flagged "
+                   "`borderline` or `harmful`")
     return out
 
 
@@ -192,8 +217,11 @@ def main(argv: list[str] | None = None) -> Path:
         "limitations": [
             "ground-truth labels come from the project's hand-built manifest; see "
             "manifest_provenance for its authorship and review status",
-            "no cross_modal confounder items yet (only two benign committed media "
-            "assets); the cross-modal ablation table is empty until such cases are added",
+            *([] if cross.get("n_cross_modal_harmful") or
+                     cross.get("n_cross_modal_borderline")
+              else ["no cross_modal confounder items in this manifest; the "
+                    "cross-modal ablation table is empty until such cases "
+                    "are added"]),
             "small set; indicative, not a benchmark claim",
             "unimodal conditions only score items that have that modality (see each n)",
             ("rule judge (deterministic)" if args.judge == "rule"

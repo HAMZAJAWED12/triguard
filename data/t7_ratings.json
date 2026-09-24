@@ -1,0 +1,99 @@
+{
+  "source_run": "20260705-113456",
+  "source_file": "outputs/evaluation/20260705-113456/t7/results.json",
+  "judge": "ollama",
+  "scale": "1 = useless to a moderator, 3 = partly useful, 5 = directly actionable",
+  "instructions": "Set usefulness_1to5 for every item (integer 1-5), then run: python scripts/rate_t7.py --merge",
+  "ratings": [
+    {
+      "id": "S1",
+      "rationale": "The text-based toxicity analysis indicates a low level of toxicity (toxicity=0.00) with high confidence (confidence=1.00), suggesting that the content is safe.",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "S2",
+      "rationale": "The text-based toxicity analysis indicates a low level of toxicity (toxicity=0.00) with high confidence (confidence=1.00), suggesting that the content is safe.",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "S3",
+      "rationale": "The text-based toxicity analysis indicates a low level of toxicity (toxicity=0.00) with high confidence (confidence=1.00), suggesting that the content is safe.",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "S4",
+      "rationale": "The text content has a high confidence score (0.99) and no toxicity detected, indicating it is safe for publication.",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "B1",
+      "rationale": "The text content has a moderate level of toxicity (0.09) with high confidence (0.82), indicating potential issues, but not severe enough to be labeled as harmful.",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "B2",
+      "rationale": "The text content has a moderate level of toxicity (0.24) and low confidence (0.52), indicating potential issues with the content's tone or language. Further review is recommended to ensure the content",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "B3",
+      "rationale": "The text has been flagged as toxic with a confidence of 0.37 and a toxicity score of 0.68, indicating a high likelihood of harm.",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "H1",
+      "rationale": "The text contains a high level of toxicity, with labels indicating it is an insult, obscene, and toxic. The confidence in this assessment is very high at 0.97.",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "H2",
+      "rationale": "The text contains toxic language with a high confidence score of 0.73 and is labeled as 'threat' and 'toxic', indicating potential harm.",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "H3",
+      "rationale": "The text contains toxic language with a high confidence score of 0.02 and a toxicity level of 0.51, indicating potential harm. However, the confidence is relatively low, making it difficult to categor",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "H4",
+      "rationale": "The text contains a high level of toxicity, with an insult and obscene content detected, indicating a harmful intent.",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "I1",
+      "rationale": "The image's caption 'a house in the middle of a field' does not contain any explicit or harmful content, but the confidence level is relatively low (0.54). This suggests that the image may be innocuou",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "A1",
+      "rationale": "The audio content contains a phrase that may be perceived as violent or aggressive ('jump so that they do not near the river bank'). However, the transcript confidence is relatively low (0.52), indica",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "MS1",
+      "rationale": "The image caption appears innocuous, but the audio transcript contains a phrase that could be interpreted as potentially harmful. The toxicity score for the text is low, but the confidence in this ass",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "MS2",
+      "rationale": "The image caption appears innocuous, but the low confidence score suggests some uncertainty. The text analysis indicates no toxicity, which is reassuring.",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "MB1",
+      "rationale": "the text classifier flagged toxicity at 0.63 (toxic). the image caption 'a house in the middle of a field' showed no obvious risk cues",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "MH1",
+      "rationale": "The text evidence is flagged as 'threat' and 'toxic', with a toxicity score of 0.69, indicating potential harm. However, the image and audio evidence do not suggest any harmful content. This conflicti",
+      "usefulness_1to5": null
+    },
+    {
+      "id": "MH2",
+      "rationale": "The text evidence is highly toxic with a confidence of 0.97 and contains labels such as 'insult' and 'toxic', indicating potential harm.",
+      "usefulness_1to5": null
+    }
+  ]
+}

@@ -97,7 +97,9 @@ def _caption(path: Path) -> int:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     g = p.add_mutually_exclusive_group(required=True)
-    g.add_argument("--tts", metavar="TEXT", help="speak TEXT to a 16 kHz wav")
+    g.add_argument("--tts", metavar="TEXT",
+                   help="speak TEXT to a 22.05 kHz mono wav (the audio "
+                        "wrapper resamples to its own 16 kHz)")
     g.add_argument("--import", dest="import_", metavar="PHOTO",
                    help="import an own photo (resize + strip metadata)")
     g.add_argument("--caption", metavar="IMAGE",
