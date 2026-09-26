@@ -42,11 +42,11 @@ Windows torch is blocked (WDAC). Real ML runs only in WSL.
 
 ## Test commands
 ```powershell
-# Windows offline (from any dir): 40 passed / 11 skipped
+# Windows offline (from any dir): 83 passed / 11 skipped (2026-09-26)
 $env:PYTHONPATH="C:\dev\triguard\src"; & "<windows-venv>\Scripts\python.exe" -m pytest -q C:\dev\triguard\tests
 ```
 ```bash
-# WSL real, fast lane: 52 passed / 10 skipped
+# WSL real, fast lane: 95 passed / 10 skipped (2026-09-26)
 wsl -e bash -lc "cd /mnt/c/dev/triguard && PYTHONPATH=src ~/.venv-tri/bin/python -m pytest -q"
 # WSL with slow tests (hf/blip/audio/ocr/ollama; needs models/server)
 wsl -e bash -lc "cd /mnt/c/dev/triguard && USE_TF=0 PYTHONPATH=src ~/.venv-tri/bin/python -m pytest -q --run-slow"

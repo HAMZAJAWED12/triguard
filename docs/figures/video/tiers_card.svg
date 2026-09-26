@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="Arial, Helvetica, sans-serif">
+  <!-- Final video, optional frame in shot 2. Real-vs-mock tiers copied from the CLAUDE.md status table (CLAUDE.md:60-71). -->
+  <!-- No external fonts or scripts. High contrast: white/navy. -->
+  <rect width="1920" height="1080" fill="#0b1f3a"/>
+  <rect x="0" y="0" width="1920" height="14" fill="#ffd166"/>
+
+  <text x="960" y="110" text-anchor="middle" fill="#ffffff" font-size="64" font-weight="bold">What is real, what is mock — tiers behind feature flags</text>
+  <text x="960" y="165" text-anchor="middle" fill="#ffffff" font-size="30" fill-opacity="0.85">Offline default runs with no downloads; every real tier is opt-in and reports itself in model_versions</text>
+
+  <!-- header row -->
+  <rect x="80" y="210" width="1760" height="70" fill="#ffd166"/>
+  <text x="110" y="257" fill="#0b1f3a" font-size="34" font-weight="bold">Component</text>
+  <text x="520" y="257" fill="#0b1f3a" font-size="34" font-weight="bold">Offline default</text>
+  <text x="1010" y="257" fill="#0b1f3a" font-size="34" font-weight="bold">Real tier (opt-in flag)</text>
+
+  <!-- row 1: text -->
+  <rect x="80" y="280" width="1760" height="150" fill="#ffffff" fill-opacity="0.06"/>
+  <text x="110" y="340" fill="#ffffff" font-size="38" font-weight="bold">Text</text>
+  <text x="520" y="340" fill="#ffffff" font-size="32">sklearn TF-IDF + logistic regression</text>
+  <text x="520" y="385" fill="#ffffff" font-size="26" fill-opacity="0.8">mock via TRIGUARD_MOCK=1</text>
+  <text x="1010" y="340" fill="#ffffff" font-size="32">unitary/toxic-bert</text>
+  <text x="1010" y="385" fill="#ffd166" font-size="26">TRIGUARD_TEXT_BACKEND=hf</text>
+
+  <!-- row 2: image -->
+  <rect x="80" y="430" width="1760" height="150" fill="#ffffff" fill-opacity="0.12"/>
+  <text x="110" y="490" fill="#ffffff" font-size="38" font-weight="bold">Image</text>
+  <text x="520" y="490" fill="#ffffff" font-size="32">deterministic mock</text>
+  <text x="520" y="535" fill="#ffffff" font-size="26" fill-opacity="0.8">cues keyed off the file name</text>
+  <text x="1010" y="490" fill="#ffffff" font-size="32">BLIP captioning + RapidOCR</text>
+  <text x="1010" y="535" fill="#ffd166" font-size="26">TRIGUARD_IMAGE_BACKEND=blip · TRIGUARD_IMAGE_OCR=1</text>
+
+  <!-- row 3: audio -->
+  <rect x="80" y="580" width="1760" height="150" fill="#ffffff" fill-opacity="0.06"/>
+  <text x="110" y="640" fill="#ffffff" font-size="38" font-weight="bold">Audio</text>
+  <text x="520" y="640" fill="#ffffff" font-size="32">deterministic mock</text>
+  <text x="520" y="685" fill="#ffffff" font-size="26" fill-opacity="0.8">per-component fallback when a real part fails</text>
+  <text x="1010" y="640" fill="#ffffff" font-size="32">Whisper (transcript) + YAMNet (events)</text>
+  <text x="1010" y="685" fill="#ffd166" font-size="26">TRIGUARD_AUDIO_BACKEND=real</text>
+
+  <!-- row 4: judge -->
+  <rect x="80" y="730" width="1760" height="150" fill="#ffffff" fill-opacity="0.12"/>
+  <text x="110" y="790" fill="#ffffff" font-size="38" font-weight="bold">Judge</text>
+  <text x="520" y="790" fill="#ffffff" font-size="32">rule-based: deterministic, schema-valid</text>
+  <text x="520" y="835" fill="#ffffff" font-size="26" fill-opacity="0.8">default; always available offline</text>
+  <text x="1010" y="790" fill="#ffffff" font-size="32">llama3 via Ollama (streaming variant in the demo)</text>
+  <text x="1010" y="835" fill="#ffd166" font-size="26">--judge ollama · falls back to rule, labelled ollama-&gt;rule</text>
+
+  <text x="110" y="950" fill="#ffffff" font-size="30">Video recorded on the real server: text=hf · image=blip · audio=real · OCR on (scripts/demo_up.sh:50-51)</text>
+  <text x="110" y="1000" fill="#ffffff" font-size="26" fill-opacity="0.7">Source: CLAUDE.md status table (lines 60-71). Schemas are frozen pydantic v2 models at every boundary.</text>
+  <text x="1890" y="1040" text-anchor="end" fill="#ffffff" font-size="22" fill-opacity="0.6">Final project video — shot 2 (tiers)</text>
+</svg>

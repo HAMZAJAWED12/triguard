@@ -53,5 +53,5 @@
   <text x="130" y="356" class="sub">accuracy</text>
   <rect x="220" y="346" width="14" height="12" class="f1"/>
   <text x="240" y="356" class="sub">macro-F1</text>
-  <text x="720" y="356" text-anchor="end" class="sub">borderline-class F1 = 0.0 in every condition (see Table E6)</text>
+  <text x="720" y="356" text-anchor="end" class="sub">borderline-class F1 = 0.0 in every condition</text>
 </svg>

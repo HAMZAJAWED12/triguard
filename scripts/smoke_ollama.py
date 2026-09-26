@@ -22,18 +22,91 @@ Run:
     PYTHONPATH=src python scripts/smoke_ollama.py data/sample_inputs/sample_harmful.json
 
 Model override: TRIGUARD_OLLAMA_MODEL=<tag>. Endpoint override: OLLAMA_HOST=<url>.
+
+Optional evidence capture (additive; nothing changes without the flag):
+    PYTHONPATH=src python scripts/smoke_ollama.py <sample.json> --save <out.json>
+writes one JSON object with keys rendered_prompt, raw_response, validated_output,
+uncertainties, model, keep_alive, timeout, judge_label for the sample it ran.
 """
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
+from typing import Optional
 
 from triguard.models import audio_model, image_model, llm_judge, text_model
+from triguard.orchestrator.pipeline import judge_label
 from triguard.orchestrator.schemas import JudgeInput, JudgeOutput
 
 _FALLBACK_TAGS = ("ollama_unavailable", "judge_output_invalid")
+_SAVE_KEYS = (
+    "rendered_prompt", "raw_response", "validated_output", "uncertainties",
+    "model", "keep_alive", "timeout", "judge_label",
+)
+
+
+def _split_save_flag(argv: list[str]) -> tuple[list[str], Optional[Path]]:
+    """Pull ``--save <path>`` out of argv; everything else is returned unchanged."""
+    rest: list[str] = []
+    save: Optional[Path] = None
+    i = 0
+    while i < len(argv):
+        if argv[i] == "--save":
+            if i + 1 >= len(argv):
+                raise SystemExit("--save requires a path argument")
+            save = Path(argv[i + 1])
+            i += 2
+            continue
+        rest.append(argv[i])
+        i += 1
+    return rest, save
+
+
+class _GenerateRecorder:
+    """Wraps llm_judge._ollama_generate to capture prompt(s) and raw response(s).
+
+    Installed only when --save is given, and removed again afterwards, so the
+    default run path is untouched. Records every attempt (the stricter retry
+    is a second call), in order.
+    """
+
+    def __init__(self) -> None:
+        self.prompts: list[str] = []
+        self.raws: list[str] = []
+        self._orig = llm_judge._ollama_generate
+
+    def __call__(self, prompt: str) -> str:
+        self.prompts.append(prompt)
+        raw = self._orig(prompt)
+        self.raws.append(raw)
+        return raw
+
+    def install(self) -> None:
+        llm_judge._ollama_generate = self  # type: ignore[assignment]
+
+    def restore(self) -> None:
+        llm_judge._ollama_generate = self._orig  # type: ignore[assignment]
+
+
+def _save_envelope(path: Path, rec: _GenerateRecorder, out: JudgeOutput) -> None:
+    """Write the --save JSON (keys fixed by _SAVE_KEYS)."""
+    envelope = {
+        "rendered_prompt": rec.prompts[0] if rec.prompts else None,
+        "raw_response": rec.raws[-1] if rec.raws else None,
+        "validated_output": out.model_dump(),
+        "uncertainties": list(out.uncertainties),
+        "model": llm_judge._ollama_model(),
+        "keep_alive": llm_judge._ollama_keep_alive(),
+        "timeout": float(os.getenv("OLLAMA_TIMEOUT", "60")),  # mirrors llm_judge
+        "judge_label": judge_label("ollama", out),
+    }
+    assert tuple(envelope) == _SAVE_KEYS
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(envelope, indent=2, ensure_ascii=False),
+                    encoding="utf-8")
 
 
 def _build_judge_input(sample: dict) -> JudgeInput:
@@ -116,6 +189,7 @@ def _is_native_ollama(out: JudgeOutput) -> bool:
 
 
 def main(argv: list[str]) -> int:
+    argv, save_path = _split_save_flag(list(argv))
     path = Path(argv[1]) if len(argv) > 1 else Path("data/sample_inputs/sample_harmful.json")
     sample = json.loads(path.read_text(encoding="utf-8"))
 
@@ -128,7 +202,17 @@ def main(argv: list[str]) -> int:
     print(json.dumps(ji.model_dump(), indent=2, ensure_ascii=False))
 
     rule_out = llm_judge.judge(ji, force_mode="rule")
-    ollama_out = llm_judge.judge(ji, force_mode="ollama")
+    if save_path is None:
+        ollama_out = llm_judge.judge(ji, force_mode="ollama")
+    else:
+        rec = _GenerateRecorder()
+        rec.install()
+        try:
+            ollama_out = llm_judge.judge(ji, force_mode="ollama")
+        finally:
+            rec.restore()
+        _save_envelope(save_path, rec, ollama_out)
+        print(f"SAVED: {save_path}")
 
     print("=" * 72)
     print("RULE rationale:")

@@ -1,0 +1,52 @@
+{
+  "derived_from": "outputs/evaluation/20260623-124802/t2/results.json",
+  "derived_by": "scripts/ci_from_envelope.py",
+  "method": "Wilson score interval, z=1.959964",
+  "z": 1.959964,
+  "positive_class": "toxic",
+  "confusion_matrix_copied": {
+    "non-toxic": {
+      "non-toxic": 455,
+      "toxic": 13
+    },
+    "toxic": {
+      "non-toxic": 23,
+      "toxic": 9
+    }
+  },
+  "counts": {
+    "tp": 9,
+    "fp": 13,
+    "fn": 23,
+    "tn": 455,
+    "n": 500
+  },
+  "values": {
+    "accuracy": {
+      "k": 464,
+      "n": 500,
+      "point": 0.928,
+      "ci95_low": 0.9019,
+      "ci95_high": 0.9475
+    },
+    "toxic_precision": {
+      "k": 9,
+      "n": 22,
+      "point": 0.4091,
+      "ci95_low": 0.2326,
+      "ci95_high": 0.6127
+    },
+    "toxic_recall": {
+      "k": 9,
+      "n": 32,
+      "point": 0.2812,
+      "ci95_low": 0.1556,
+      "ci95_high": 0.4537
+    }
+  },
+  "point_estimates_in_envelope": {
+    "accuracy": 0.928,
+    "toxic_precision": 0.4091,
+    "toxic_recall": 0.2812
+  }
+}

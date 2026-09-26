@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="Arial, Helvetica, sans-serif">
+  <!-- Final video, shot 1. No external fonts or scripts. High contrast: white text on navy (#0b1f3a). -->
+  <!-- Facts from CLAUDE.md:8-14 (identity) and CLAUDE.md:91-93 (decision-support wording). -->
+  <rect width="1920" height="1080" fill="#0b1f3a"/>
+  <rect x="0" y="0" width="1920" height="14" fill="#ffd166"/>
+  <rect x="0" y="1066" width="1920" height="14" fill="#ffd166"/>
+
+  <text x="960" y="330" text-anchor="middle" fill="#ffffff" font-size="150" font-weight="bold">TriGuard</text>
+  <text x="960" y="430" text-anchor="middle" fill="#ffffff" font-size="48">A multimodal, explainable, locally deployable content-moderation pipeline</text>
+  <text x="960" y="510" text-anchor="middle" fill="#ffd166" font-size="44" font-weight="bold">Decision-support prototype: recommended actions for a human reviewer</text>
+
+  <line x1="460" y1="580" x2="1460" y2="580" stroke="#ffffff" stroke-width="3" stroke-opacity="0.6"/>
+
+  <text x="960" y="660" text-anchor="middle" fill="#ffffff" font-size="40">CM3070 Computer Science Final Project — University of London</text>
+  <text x="960" y="725" text-anchor="middle" fill="#ffffff" font-size="36">Template: CM3020 Artificial Intelligence — Project Idea 1</text>
+  <text x="960" y="775" text-anchor="middle" fill="#ffffff" font-size="36" font-style="italic">Orchestrating AI Models to Achieve a Goal</text>
+
+  <text x="960" y="900" text-anchor="middle" fill="#ffd166" font-size="44" font-weight="bold">[STUDENT: name]</text>
+  <text x="960" y="955" text-anchor="middle" fill="#ffffff" font-size="30" fill-opacity="0.85">[STUDENT: student reference number, if the brief asks for it]</text>
+
+  <text x="1890" y="1040" text-anchor="end" fill="#ffffff" font-size="22" fill-opacity="0.6">Final project video — shot 1 of 9</text>
+</svg>

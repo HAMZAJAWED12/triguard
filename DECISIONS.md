@@ -818,3 +818,233 @@ command). `tests/test_docx_to_md.py` builds a minimal docx in
 `docs/draft_as_submitted/wordcount.json`: prose 6745 words across ch1-ch6
 (ch1 723, ch2 1762, ch3 932, ch4 1236, ch5 1649, ch6 443); prose+tables
 7633. These are mirror measurements, not evaluation numbers.
+
+## Decision 031: Judge prompt — designed once, validated, not revised
+Date: 2026-09-24
+Status: draft — Decision/Reason to be completed by the author
+Source draft: `docs/judge_prompt_card.md` '## 8. For integration' (Section 9 there = the [STUDENT] question list; placed by the Integrate stage 2026-09-24).
+
+Context: `JUDGE_PROMPT_TEMPLATE` (`src/triguard/models/llm_judge.py` 55-76)
+and the stricter retry suffix (232-233) have identical content at every commit
+that touched the file (1373e06, 4f10803, e866541, daae032; SHA-256
+1df9a321a8f1c535...). The four commits changed request handling (call-time
+env, fallback-tag split, JSON hardening, streaming variant, keep_alive) but
+not the prompt text. Validation evidence: D-015 single-sample real run
+(DECISIONS.md 240-258); T7 grounding run n=18
+(outputs/evaluation/20260705-113456/t7/results.json); Phase D live smoke
+(DECISIONS.md 626-633); T6 v2 two-judge comparison n=24 (D-029). Design
+documents differ from the shipped prompt in: system/user two-message
+structure vs single prompt field (system_architecture.md 113); runtime regex
+guardrail vs post-hoc T7 measurement (system_architecture.md 115); model tag
+suffix (112); fallback result rule-scored rather than fixed borderline
+(107; project_design_draft.md 75; evaluation_protocol.md 58); tag name for
+invalid JSON (chapter4_prototype.md 13). Request omits `format`, `system`,
+`seed`, `num_ctx` (llm_judge.py 242-246); `temperature` is a literal 0.0
+(245).
+Options considered: [STUDENT]
+Decision: [STUDENT]
+Reason: [STUDENT — the repo records NO reason for single-prompt design,
+temperature 0.0, or the absence of format=json; see Section 9]
+Impact: prompt text is identical (same SHA-256) at every commit spanning
+the T7, E6c and D-015 runs listed above; the design-vs-shipped differences
+above are not yet stated in Ch4/Ch5 (E9 lists protocol deviations only) —
+[STUDENT] to decide where and whether they are stated; no code change.
+
+## Decision 032: Derived statistics from committed envelopes
+Date: 2026-09-24
+Status: draft — Decision/Reason to be completed by the author
+Source draft: `docs/t2_sampling_factsheet.md` '## For integration' (provisionally numbered 031 there; renumbered 032 by the Integrate stage 2026-09-24).
+
+Context: The committed T2 envelopes carry point estimates and confusion
+matrices but no interval estimates. `scripts/ci_from_envelope.py` (new,
+stdlib `math` only) reads a committed `results.json` confusion matrix and,
+with `--write`, stores `derived_intervals.json` beside it recording
+`derived_from`, `method` ("Wilson score interval, z=1.959964"), the copied
+matrix, k/n per metric and the interval bounds. Files produced:
+`outputs/evaluation/20260623-074102/t2/derived_intervals.json`,
+`outputs/evaluation/20260623-124802/t2/derived_intervals.json`. The
+envelopes themselves are untouched. Unit test:
+`tests/test_ci_from_envelope.py` (hand-worked expected values).
+Options considered: [STUDENT]
+Decision: [STUDENT] — candidate wording: "Derived statistics from committed
+envelopes are citeable when produced by a committed script into a
+`derived_*.json` next to the envelope."
+Reason: [STUDENT]
+Impact: two new derived files under `outputs/evaluation/` (inputs
+read-only); one new script; one new test (+2 tests in the fast lane);
+`docs/t2_sampling_factsheet.md` and `docs/dataset_cards.md` reference the
+derived values with their file path and key.
+
+## Decision 033: Rule-judge audio flag matches mock tag vocabulary only
+Date: 2026-09-24
+Status: draft — Decision/Reason to be completed by the author
+Source draft: `docs/model_cards.md` '## For integration' (placed by the Integrate stage 2026-09-24).
+
+Context: The rule judge flags the audio modality when any yamnet_tags label
+is exactly one of {"shouting", "screaming", "gunshot"} (lowercase,
+src/triguard/models/llm_judge.py:161-162). Those three strings are the mock
+wrapper's vocabulary (src/triguard/models/audio_model.py:44-51). The real
+tier returns AudioSet display names read verbatim from the TF-Hub class map
+(audio_model.py:153-155), which are capitalised in every committed
+observation: "Speech" (docs/implementation_notes.md:146, :262); "Siren",
+"Vehicle", "Aircraft", "Silence", "Laughter", "Bicycle"
+(outputs/evaluation/20260704-153729/t4/results.json, yamnet_label_map and
+failures.yamnet_mismatched). The exact AudioSet display names for the
+shout / scream / gunshot classes are UNVERIFIED (not present in the
+committed label map). Consequently, on the real tier the rule judge's audio
+signal can only be 0.1 (llm_judge.py:163) unless a real display name happens
+to equal one of the three lowercase strings; the lowercase mock tags can
+still match when raw["yamnet_fallback"] is set (audio_model.py:212-214).
+The LLM judge receives the tags verbatim (llm_judge.py:359-363) and is not
+subject to the exact-match set.
+Note on T6: the audio_only condition in run 20260725-191000 scores every
+one of its 6 items as safe (conditions.audio_only.confusion_matrix: 3 + 1 +
+2 all predicted safe). Related facts: every audio item in the v2 manifest
+(A1, MS1, MS3, MB2, MH2, MH3 — `items[*].audio` non-null) references the
+single committed clip data/sample_inputs/audio_test.wav
+(data/sample_inputs/triguard_eval_v1/manifest.json); results.json
+limitations[1] reads "no cross_modal confounder items yet (only two benign
+committed media assets)"; the T6 envelope persists no per-item yamnet_tags
+(top-level keys: track, run_at, manifest, manifest_provenance, config,
+n_items, class_balance, conditions, cross_modal_ablation, limitations), so
+the tags the rule judge saw for that clip in this run are not recorded.
+[STUDENT] to attribute the all-safe outcome (clip content vs the vocabulary
+mismatch above); the committed evidence does not separate the two causes.
+Options considered: [STUDENT]
+Decision: [STUDENT]
+Reason: [STUDENT]
+Impact: Facts the student can state — the rule-judge audio path has never
+been exercised by a real capitalised risk tag in any committed run; the
+mock-tag tests (tests/test_llm_judge.py, tests/test_orchestrator.py) exercise
+the lowercase set; changing the match set or lower-casing tags in
+llm_judge.py touches the rule-judge contract (CLAUDE.md "changing the LLM
+judge contract" -> ask first) and would need a new slow test on the real
+tier.
+
+## Decision 034: check_citations tool + Ch2 argument spine (F1)
+Date: 2026-09-24
+Status: draft — Decision/Reason to be completed by the author
+Source draft: `docs/ch2_argument_spine.md` '## F. For integration' > '### DECISIONS entry candidate' (bullet form; fields laid out by the Integrate stage 2026-09-24, Facts text verbatim).
+
+Context: `scripts/check_citations.py` (stdlib), `tests/test_check_citations.py`
+(5 tests); run on `docs/draft_as_submitted/ch2.md --refs
+docs/draft_as_submitted/references.md` -> cited-not-referenced 0,
+referenced-not-cited 1 (Lazar 2023 — cited in another chapter; full.md
+run gives 0), bare-name-without-citation 2 (Hateful Memes ch2.md:17,
+VisualBERT ch2.md:19); strict `--every-mention` mode: 9 uncited-sentence
+mentions (ch2.md:5, 11, 17, 19, 23, 31 x3, 39). The audit expectation
+"Faster-RCNN + MobileNet" is NOT reproduced: both names sit in sentences
+that carry a citation (ch2.md:19 Li, L.H. et al.; ch2.md:27 TensorFlow
+Hub); a names-file mapping (`Faster-RCNN | Ren, 2015`) would flag them —
+the reference targets are UNVERIFIED-EXTERNAL (see H = section H of
+`docs/ch2_argument_spine.md`).
+Options considered: [STUDENT]
+Decision: [STUDENT]
+Reason: [STUDENT]
+Impact: files added — `scripts/check_citations.py` (stdlib), `tests/test_check_citations.py` (5 tests in the fast lane), `docs/ch2_argument_spine.md` (Table E12 body -> Table E12 in `docs/report_evidence_tables.md`; wording constraints E.1-E.8; [STUDENT] list); no change under `src/`. Ch2 prose count re-keyed in `docs/report_skeleton.md` to `docs/draft_as_submitted/wordcount.json` (`chapters.ch2.prose_words` 1762, `prose_plus_table_words` 1905).
+
+## Decision 035: P3 testing strategy — retry/shielding/CLI tests + inventory tooling
+Date: 2026-09-24
+Status: draft — Options/Decision/Reason to be completed by the author; pytest-cov dev dependency proposed, not installed
+Source draft: `docs/evaluation_strategy_matrix.md` '## For integration' > '### DECISIONS.md draft — P3' (placed by the Integrate stage 2026-09-26; body verbatim, one Impact line appended; Options/Decision/Reason reset to [STUDENT] by the Verify stage 2026-09-26, the facts kept in the bullet list above them).
+
+Context: docs/evaluation_protocol.md T5 (lines 56-60) names three fixture-
+driven behaviours and a pytest-cov target; before this change only the
+text-only case (test_orchestrator.py:6) and the stream-path invalid-JSON case
+(test_llm_judge_stream.py:91) had tests; the retry-once contract
+(llm_judge.py:223-238), wrapper-failure shielding (pipeline.py:93-125) and the
+CLI entry point (cli.py) had none; test counts in docs were typed by hand.
+Facts on record for the author's Options / Decision / Reason fields:
+- candidate options listed by the P3 task: (a) leave the protocol rows as
+  "untested" in E9; (b) add offline tests that discharge lines 58-59 and
+  generate the inventory mechanically; (c) also install pytest-cov to
+  discharge line 60;
+- files added: tests/test_llm_judge_retry.py (4 tests), tests/test_pipeline_
+  shielding.py (4), tests/test_cli.py (4) — offline, monkeypatch/subprocess,
+  no new dependency; scripts/test_inventory.py (stdlib: collects with the
+  calling interpreter, classifies by an explicit file-basename table, diffs
+  collected files against tests/test_*.py to expose importorskip drop-outs,
+  folds in a --junitxml run, exits 1 on any unclassified id; outputs
+  docs/generated/test_inventory.md (WSL) and
+  docs/generated/test_inventory_offline.md); scripts/coverage_report.sh
+  (refuses without pytest_cov; otherwise fast lane only — teardown SIGSEGV,
+  docs/implementation_notes.md:384-386);
+- pytest-cov: not installed; listed as a PROPOSED dev dependency
+  (requirements-dev / requirements-full) pending the author's approval
+  (CLAUDE.md rule 4);
+- protocol status after the change (docs/evaluation_strategy_matrix.md
+  Table 2): line 58 tested-stream-only -> tested; line 59 untested -> tested;
+  line 60 not measured (unchanged).
+Options considered: [STUDENT]
+Decision: [STUDENT]
+Reason: [STUDENT]
+Impact: fast lanes 2026-09-26 (all files landed, inventories regenerated): WSL 95 passed / 10 skipped / 0 failed,
+offline 83 passed / 11 skipped / 0 failed (baseline 71 + 12 and 59 + 12 new tests, plus the
+P2 checker tests from the same sprint). Schemas,
+judge contract and public API untouched. Table E9 gains the "T5 coverage"
+row; Tables E1a-E1c added.
+Integrate-stage re-run 2026-09-26, all tasks landed: WSL 95 passed / 10 skipped, Windows
+offline 83 passed / 11 skipped (both exit 0; tests/test_figures_provenance.py
+green). Tables E1a/E1b/E1c placed in docs/report_evidence_tables.md.
+
+## Decision 036: P2 — report reference checker + crosswalk; SVG text de-coupled from table ids
+Date: 2026-09-24
+Status: draft — Decision/Reason to be completed by the author
+Source draft: `docs/report_crosswalk.md` '## For integration' > '### DECISIONS draft — P2' (placed by the Integrate stage 2026-09-26; body verbatim).
+
+Context: The pre-submission checklist required a reference checker for the
+report (skeleton line "Run `scripts/check_report_refs.py` (pending)"). Added
+`scripts/check_report_refs.py` (stdlib zipfile + ElementTree; field-aware
+text; checks: missing / dangling references, per-kind sequence, duplicates,
+repo-only `Table E*` ids, standalone caption length, front-matter list
+drift, drawing/table proximity, header/footer captions) with
+`tests/test_check_report_refs.py` (7 tests on generated minimal .docx files),
+`docs/report_crosswalk.md` (report id -> asset / E-table -> results.json key
+paths -> chapter), and `tests/test_figures_provenance.py` (5 tests: every
+number printed on fig3/fig4/fig5/fig6 SVG text exists in the cited
+results.json; no `Table E*` id in any SVG). Run on the submitted draft: 3
+errors, all `repo-only-id` on the Table 4.2 / 5.1 / 5.4 source lines; 0
+missing, 0 dangling, 0 sequence errors; 1 merged S2/S3 caption. One text edit:
+`docs/figures/fig4_t6_ablation.svg` trailing label dropped "(see Table E6)".
+`docs/report_frontmatter_template.md` embedding recipe now says insert the
+SVG directly (Word accepts SVG; byte-identical asset) and lists
+S3_stream_tokens.png / S4_dashboard_full.png as committed-but-unused
+(md5 check against the draft's `word/media/`).
+Options considered: [STUDENT]
+Decision: [STUDENT]
+Reason: [STUDENT]
+Impact: two new scripts/tests in the fast lane (+12 tests); no change under
+`src/`; no change to any file under `outputs/`; report edits (E-id source
+lines, S2/S3 split, SEQ/REF fields) remain the author's to make in Word.
+
+## Decision 037: P1 — final video shot list + preflight; dashboard newest-run rule surfaced
+Date: 2026-09-24
+Status: draft — Options/Decision/Reason to be completed by the author
+Source draft: `docs/Video_Shot_List_Final.md` '## For integration' (placed by the Integrate stage 2026-09-26; body verbatim, one Impact line appended).
+
+Context: the FINAL brief's video constraints (3-5 min, own voice, not sped
+up, working program + features + understanding; criteria 17/18) replace the
+preliminary plan in `docs/Video_Script_Prototype_Demo.md` (now banner-marked
+historical). A 9-shot, 260 s plan was written with file:line evidence per
+shot and an Ollama-down fallback (`index.html:186-188`). `scripts/video_preflight.sh`
+(WSL, read-only: health keys `main.py:85-100`, `ollama ps`, `data/local_demo`
+presence, `git status --porcelain -- outputs/evaluation`, `/eval/summary`
+run ids) gives a go/no-go before recording. `docs/video_number_card.md`
+lists every dashboard number verbatim with its results.json key.
+Fact surfaced: `/eval/summary` keeps the newest run per track
+(`main.py:469,481,515`), so `/dashboard` shows T6 run 20260725-191055
+(ollama judge, multimodal accuracy 0.4583) while Table E6 cites the rule run
+20260705-160858 (0.625) and E6c holds both runs; [STUDENT] decides how the
+on-screen run id is handled. Suite counts measured 2026-09-24 on the working tree:
+Windows 83 passed / 11 skipped, WSL 95 passed / 10 skipped (re-measure at
+integration; sibling tasks were adding tests during the measurement).
+Options considered: [STUDENT]
+Decision: [STUDENT]
+Reason: [STUDENT]
+Impact: files added — `docs/Video_Shot_List_Final.md`, `scripts/video_preflight.sh`,
+`docs/video_number_card.md`, `docs/figures/video/title_card.svg`,
+`tiers_card.svg`, `close_card.svg`; `docs/Video_Script_Prototype_Demo.md`
+banner lines only (counts, pointer, architecture figure path). No change
+under `src/`, `outputs/` or `scripts/demo_up.sh`.
+Integrate-stage re-run 2026-09-26: Windows 83 passed / 11 skipped, WSL 95 passed / 10 skipped (Table E1
+row 'after D-035').

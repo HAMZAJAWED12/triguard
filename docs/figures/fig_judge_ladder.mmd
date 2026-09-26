@@ -1,0 +1,35 @@
+%% fig_judge_ladder.mmd — TriGuard LLM-judge fallback ladder, NON-streaming path only
+%% Source of truth: src/triguard/models/llm_judge.py at commit 908b1e5 (line numbers in node labels)
+%% and src/triguard/orchestrator/pipeline.py lines 43-56 (terminal label).
+%% The streaming variant (judge_stream, llm_judge.py 290-332) has no retry and is NOT drawn here.
+%% Caption (metadata only, not prose): Figure — non-streaming judge ladder: one Ollama call,
+%% one stricter retry, then rule-judge fallback with an honest uncertainty tag; terminal
+%% label per pipeline.judge_label. Render: mmdc -i fig_judge_ladder.mmd -o fig_judge_ladder.svg
+
+flowchart TD
+    A["JudgeInput"] --> B["_build_evidence_block<br/>llm_judge.py:346-365"]
+    B --> C["JUDGE_PROMPT_TEMPLATE.format(evidence_block)<br/>:226"]
+    C --> D["POST {OLLAMA_HOST}/api/generate<br/>stream=false, options.temperature=0.0,<br/>keep_alive=_ollama_keep_alive(), timeout=OLLAMA_TIMEOUT<br/>:241-255"]
+    D --> E{"_parse_judge_output<br/>first '{' .. last '}' -> json.loads -> JudgeOutput.model_validate<br/>:335-343"}
+    E -- "valid" --> V1["JudgeOutput from LLM<br/>uncertainties unchanged<br/>judge_label = 'ollama'"]
+    E -- "ValidationError or JSONDecodeError<br/>:231" --> F["stricter = prompt + IMPORTANT suffix<br/>:232-233"]
+    F --> G["second _ollama_generate(stricter)<br/>:234"]
+    G --> H{"_parse_judge_output<br/>:236"}
+    H -- "valid" --> V2["JudgeOutput from LLM<br/>judge_label = 'ollama'"]
+    H -- "invalid again<br/>:237" --> J["raise JudgeFailure<br/>:238"]
+    J --> R1["_rule_based_judge +<br/>'judge_output_invalid'<br/>:99-103"]
+    D -. "urllib.error.URLError<br/>(unreachable / refused)" .-> R2["_rule_based_judge +<br/>'ollama_unavailable:&lt;e.reason&gt;'<br/>:104-108"]
+    D -. "any other Exception<br/>(e.g. socket timeout)" .-> R3["_rule_based_judge +<br/>'ollama_unavailable:&lt;TypeName&gt;'<br/>:109-113"]
+    G -. "URLError / other Exception" .-> R2
+    R1 --> T["pipeline.judge_label:<br/>any uncertainty startswith<br/>('ollama_unavailable', 'judge_output_invalid')<br/>-> 'ollama->rule'<br/>pipeline.py:43-56"]
+    R2 --> T
+    R3 --> T
+    V1 --> T2["pipeline.judge_label -> 'ollama'<br/>pipeline.py:55"]
+    V2 --> T2
+
+    classDef llm fill:#e8f1ff,stroke:#2b5fb3,color:#000;
+    classDef rule fill:#fff4e0,stroke:#b36b00,color:#000;
+    classDef term fill:#eeeeee,stroke:#555,color:#000;
+    class V1,V2 llm;
+    class R1,R2,R3 rule;
+    class T,T2 term;

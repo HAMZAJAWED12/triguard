@@ -53,14 +53,17 @@ trained from scratch" sentence (stale; the 30-sentence corpus is now
 documented in Ch4 §4.2 / Table E11 instead). REWRITE §1.4 wholly:
 six-chapter preview, no "preliminary report", no video sentence.
 
-## Chapter 2 — Literature Review (budget 2300 target / 2500 cap; submitted draft 1,814 words)
+## Chapter 2 — Literature Review (budget 2300 target / 2500 cap; submitted draft 1,762 prose words / 1,905 with table cells)
 
 Source of record = the submitted draft's Ch2, sections 2.1-2.7:
 `docs/draft_as_submitted/ch2.md` — local-only, gitignored; regenerate with
 `scripts/docx_to_md.py <draft.docx> --out docs/draft_as_submitted` (re-key every pointer below to THAT file's
 section numbers; do not use the old .md §1-§11 numbering). Word budget:
-1,814 (submitted-draft count, orchestrator-supplied) -> 2,300 target /
-2,500 cap (~486 words headroom for the F1 cohesion work + citations).
+1,762 prose / 1,905 prose + table cells (`docs/draft_as_submitted/
+wordcount.json` `chapters.ch2.prose_words` / `.prose_plus_table_words`;
+replaces the earlier orchestrator-supplied 1,814) -> 2,300 target / 2,500
+cap (headroom: 538 prose words to the 2,300 target; 595 prose + table-cell
+words to the 2,500 cap — for the F1 cohesion work + citations).
 
 Feedback F1 (cohesion) fixes — pointers only:
 - Five hand-off boundaries need one linking sentence each: 2.2->2.3,
@@ -70,10 +73,14 @@ Feedback F1 (cohesion) fixes — pointers only:
 - The unfulfilled "organised by design question" promise: either organise
   2.3-2.6 by the design questions actually asked (text? image+text? audio?
   judge?) with those questions in the sub-headings, or delete the promise.
-- Table 2.1 replacement body = **Table E12** (pending): five property
-  columns (multimodal, audio-aware, explainable/rationale, local/offline,
-  end-to-end decision) + a TriGuard row; caption numbered (P2); cells are
-  facts from the cited papers only.
+- Table 2.1 replacement body = **Table E12** (done — report_evidence_tables.md,
+  source docs/ch2_argument_spine.md): delivered columns are Text / Image /
+  Audio (speech / events) / Local execution / Human-readable rationale /
+  Backend provenance & reviewer workflow / Limitation + a TriGuard row
+  (the earlier five-tag list multimodal / audio-aware / explainable / local /
+  end-to-end is covered by that column set); caption numbered (P2); cells
+  are yes/no/partial readings of docs/literature_matrix.md:7-14 — the seven
+  'partial' cells (n1-n7) need the student's confirmation.
 - Align 2.7 with Ch5: 2.7 currently says the cross-modal evidence is "weak";
   the Figure 5 (T6) caption says the confounder table is "empty". Use
   "empty" in both places (the metric was not measured, not measured-and-low;
@@ -109,7 +116,7 @@ stance, user groups, ethics-by-design. Update to AS-BUILT:
   + rule default — a DESIGN decision, justify it here.
 - **§3.4 hook — component selection (F4).** For EACH model (toxic-bert,
   BLIP, RapidOCR, Whisper, YAMNet, llama3-8B/Ollama): what it is + why it
-  was chosen over an alternative. Facts-only **Table M1** (pending): model,
+  was chosen over an alternative. Facts-only **Table M1** (done — report_evidence_tables.md, source docs/model_cards.md): model,
   hub id / pinned revision, input -> output, config values, file:line,
   source decision. Repo status of alternatives: D-012 (text), D-013 (image),
   D-023 (OCR: easyocr rejected, torch ABI), D-015 (judge) record options;
@@ -133,7 +140,7 @@ results. Suggested sections (~words):
   Whisper chunking + YAMNet top-5>0.2 + per-component fallback. Lazy
   imports, lru_cache.
   **§4.2 hook (F2):** name the 30-sentence bundled training corpus —
-  **Table E11** corpus card (pending). Facts: `src/triguard/models/
+  **Table E11** corpus card (done — report_evidence_tables.md, source docs/dataset_cards.md). Facts: `src/triguard/models/
   text_model.py:48-81` `_TRAIN`; role = training data for the offline
   sklearn floor ONLY (never an evaluation set); 30 sentences, 15 toxic /
   15 non-toxic (counted from `_TRAIN`, 2026-09-24); hard-token override
@@ -150,10 +157,10 @@ results. Suggested sections (~words):
   cited by line); (ii) non-stream ladder figure (parse -> validate -> one
   stricter retry -> rule fallback, tags `judge_output_invalid` /
   `ollama_unavailable:<reason>`; streaming path has no retry); (iii)
-  **Table E13a** prompt revision log (pending) — prompt template
+  **Table E13a** prompt revision log (done — report_evidence_tables.md, source docs/judge_prompt_card.md) — prompt template
   byte-identical across commits 1373e06 / 4f10803 / e866541 / daae032 /
   HEAD (sha256 of the template string compared 2026-09-24); (iv) **Table
-  E13b** validation log (pending: D-015 sample, T7 n=18, T6 v2 n=24);
+  E13b** validation log (done — report_evidence_tables.md: D-015 sample, T7 n=18, Phase D smoke, T6 v2 n=24);
   (v) honest statement to make: designed once, validated, never revised.
   Own the design-vs-shipped deviations (borderline-on-failure, system/user
   split, regex guardrail in system_architecture.md:107-116 — none shipped)
@@ -180,7 +187,7 @@ Suggested sections:
 - 5.1 Strategy (300): tracks T1-T8 mapped to project aims; unimodal
   baseline beside every multimodal claim; numbers only from committed
   results.json envelopes (mention the 195-claim audit, commit 33ade3d);
-  **Table E10** datasets & tracks at a glance (pending: dataset, role
+  **Table E10** datasets & tracks at a glance (done — report_evidence_tables.md, source docs/dataset_cards.md: dataset, role
   train/eval, n, selection, licence, evidence path). **Table E9**
   protocol-vs-actual deviations — own them openly (criterion 13 gold).
   **Single scope statement for user testing** (facts): no user testing with
@@ -193,17 +200,20 @@ Suggested sections:
   (a) automated layers via **Table E1** (unit / integration / regression /
       real-backend slow lane; fast-vs-slow design `tests/conftest.py`;
       honesty properties asserted by tests, e.g. model_versions);
-  (b) protocol-claim discharge + coverage via **Table E1b** (pending:
+  (b) protocol-claim discharge + coverage via **Table E1b** (done —
+      report_evidence_tables.md, source docs/evaluation_strategy_matrix.md:
       protocol claim -> discharging test) and **Table E9** rows: T1 "200
       synthetic inputs" planned vs n_samples=14 run
       (`outputs/evaluation/20260623-063735/results.json`); T5 branch
       coverage NOT measured (pytest-cov absent); judge retry: protocol
       borderline-on-failure (evaluation_protocol.md:58) vs actual
       rule-judge fallback tagged `judge_output_invalid` (D-015);
-  (c) what is NOT tested (**Table E1c** manual functional checks, pending:
-      CLI, README quick-start, `scripts/demo_up.sh` checklist) + the user
+  (c) what is NOT tested (**Table E1c** manual functional checks, done —
+      report_evidence_tables.md, source docs/evaluation_strategy_matrix.md:
+      `scripts/demo_up.sh` checklist strings, D-027 live items, CLI; **Table
+      E1a** per-layer inventory for the layer counts) + the user
       testing scope statement cross-ref to 5.1.
-- 5.3 Text track (300): **Tables E3a** (pending: sampling facts) **+ E3**
+- 5.3 Text track (300): **Tables E3a** (done — report_evidence_tables.md: sampling facts + Wilson CIs) **+ E3**
   + Fig 3; precision/recall trade; threshold + tiny-positive-class caveats.
   Sampling paragraph pointers (F3): HOW = `src/triguard/data/datasets.py:
   190-218` (streaming `test` split, seeded (42) shuffle over a bounded
@@ -290,14 +300,15 @@ Repo file vs report number (recorded, NOT renamed yet):
 | Fig 5 | docs/figures/fig4_t6_ablation.svg (v2 four conditions; run 20260705-160858) | Ch5.6 | exists (file name says fig4) |
 | Fig 6 | docs/figures/fig6_t8_perf.svg (mock vs real latency/RSS; runs 20260705-113354, 20260705-113639) | Ch5.8 | exists |
 | Fig 7 | §4.3 verbatim judge prompt (llm_judge.py:55-76) as a numbered figure | Ch4.3 | pending; if inserted before Figure 6, renumber Figure 6 -> 8 and every Ch5 reference to it |
-| Fig 8 | §4.3 non-stream judge ladder (parse -> validate -> retry -> rule fallback, tags) | Ch4.3 | pending; same renumbering rule |
+| Fig 8 | docs/figures/fig_judge_ladder.mmd (§4.3 non-stream judge ladder: parse -> validate -> retry -> rule fallback, tags; caption text in the file's `%%` metadata comments) | Ch4.3 | mermaid source exists, NOT rendered (mmdc not on PATH; render with mmdc or a mermaid viewer, syntax unchecked); same renumbering rule |
 | S1-S4 | docs/figures/screenshots/ (S1 presets, S2 compare, S3 stream, S4 dashboard) | Ch4.4 | exist; S2/S3 need separate standalone captions |
-| E1 | test suite facts (two dated rows added 2026-09-24) | Ch5.2 | exists |
-| E1b | protocol claim -> discharging test | Ch5.2 | pending (P3) |
-| E1c | manual functional checks (CLI, quick-start, demo_up.sh) | Ch5.2 | pending (P3) |
+| E1 | test suite facts (dated rows: 2026-07-06; 2026-09-24 after D-030; 2026-09-26 after D-035) | Ch5.2 | exists |
+| E1a | per-layer test inventory (WSL primary + offline footnote; generated by scripts/test_inventory.py) | Ch5.2 | done (source: docs/evaluation_strategy_matrix.md) — P3 |
+| E1b | protocol claim -> discharging test (protocol lines 21-23, 57-60) | Ch5.2 | done (source: docs/evaluation_strategy_matrix.md Table 2) — P3; lines 58/59 flipped to tested |
+| E1c | manual functional checks (demo_up.sh pass/fail strings, D-027 live items, two CLI checks now automated) | Ch5.2 | done (source: docs/evaluation_strategy_matrix.md) — P3 |
 | E2 | T1/T5 smoke run (quote only with limitations) | Ch5.2 | exists |
 | E3 | T2 sklearn vs toxic-bert | Ch5.3 | exists |
-| E3a | T2 sampling facts (how / why-500-unrecorded / 32 positives) | Ch5.3 | pending (F3) |
+| E3a | T2 sampling facts (how / why-500-unrecorded / 32 positives) + derived Wilson CIs | Ch5.3 | done (source: docs/t2_sampling_factsheet.md) — F3 |
 | E4 / E4b | T3 image-text + OCR ablation | Ch5.4 | exist |
 | E5 | T4 audio proxies | Ch5.5 | exists |
 | E6 / E6b | T6 v2 rule run 20260705-160858 / v1 method evolution | Ch5.6 | exist |
@@ -306,11 +317,11 @@ Repo file vs report number (recorded, NOT renamed yet):
 | E7b | T7 citation-type summary (4 rows) | Ch5.7 | NEW |
 | E8 | T8 latency & memory | Ch5.8 | exists |
 | E9 | protocol-vs-actual deviations — add/rewrite rows: T7 (unit, rater, scale wording), T1 (200 planned vs n=14), T5 (coverage not measured), judge retry (borderline-on-failure vs rule fallback tagged) | Ch5.1 / 5.2 | exists; rows pending |
-| E10 | datasets & tracks at a glance | Ch5.1 | pending (F2/F3) |
-| E11 | 30-sentence corpus card | Ch4.2 | pending (F2) |
-| E12 | Table 2.1 replacement body (five property columns + TriGuard row) | Ch2 | pending (F1/P2) |
-| E13a / E13b | prompt revision log / validation log | Ch4.3 | pending (F6) |
-| M1 | models composed (facts-only) | Ch3.4 | pending (F4) |
+| E10 | datasets & tracks at a glance | Ch5.1 | done (source: docs/dataset_cards.md) — F2/F3 |
+| E11 | 30-sentence corpus card | Ch4.2 | done (source: docs/dataset_cards.md) — F2; authorship row 'STUDENT TO STATE' |
+| E12 | Table 2.1 replacement body (Text / Image / Audio speech+events / Local / Rationale / Provenance & workflow + TriGuard row) | Ch2 | done (source: docs/ch2_argument_spine.md) — F1/P2; n1-n7 'partial' cells need student confirmation |
+| E13a / E13b | prompt revision log / validation log | Ch4.3 | done (source: docs/judge_prompt_card.md) — F6 |
+| M1 | models composed (facts-only) | Ch3.4 | done (source: docs/model_cards.md) — F4; check with scripts/verify_model_cards.py |
 
 Screenshot shot list (server: `uvicorn triguard.api.main:app` per README):
 - S1 /ui with preset buttons + a rendered verdict (mock mode fine).
@@ -353,14 +364,24 @@ Screenshot shot list (server: `uvicorn triguard.api.main:app` per README):
       every E-table number (E1-E13, M1) traced — none retyped by hand.
 - [ ] Word ledger: BOTH totals (prose-only; prose + table cells) <= chapter
       caps AND <= 10,500 strict total.
-- [ ] Run `scripts/check_report_refs.py` (pending) on the final .docx:
-      every Figure/Table/Screenshot caption referenced in body text,
-      numbering sequential, no dangling references, no repo-only ids
-      (E1/E9/E4b) left in captions.
+- [ ] `scripts/check_report_refs.py <final.docx>` exits 0 (3 `repo-only-id`
+      lines replaced per `docs/report_crosswalk.md` §2; S2/S3 caption split);
+      `tests/test_figures_provenance.py` green; crosswalk §1 consulted for
+      every figure/table number.
+- [ ] Word: References > Insert Caption for every figure, table and listing
+      (number = `SEQ` field) and Insert Cross-reference for every in-text
+      mention (`REF` field); select all, F9, save, then re-run
+      `scripts/check_report_refs.py` — it prints `SEQ/REF fields present —
+      update fields (F9) before checking` on an un-updated file
+      (`docs/report_crosswalk.md` §3).
 - [ ] Every figure referenced from body text (brief demands linkage).
 - [ ] Public repository URL present in the report.
-- [ ] Video runtime measured (VLC / file properties) and within 3:00-5:00
-      before upload.
+- [ ] Preliminary MP4 runtime measured (VLC) and recorded [STUDENT]; final
+      MP4 runtime measured in VLC and within 3:00-5:00 (plan budget 4:20,
+      `docs/Video_Shot_List_Final.md`).
+- [ ] `wsl -e bash /mnt/c/dev/triguard/scripts/video_preflight.sh` exits 0
+      immediately before recording (health hf/blip/real/OCR, `ollama ps`,
+      local_demo media, `outputs/evaluation` clean, `/eval/summary` run ids).
 - [ ] Careful-language sweep: "supports/assists/demonstrates feasibility";
       never "automatically detects / achieves perfect / replaces".
 - [ ] Harvard consistency; every in-text cite has a reference entry and
@@ -371,3 +392,22 @@ Screenshot shot list (server: `uvicorn triguard.api.main:app` per README):
       fresh run or removed (E9 rows own the deviation).
 - [ ] Optional before submission: rate T7 usefulness_1to5 (18 items) and
       merge (`scripts/rate_t7.py --merge`) to fill the human-eval gap.
+- [ ] Run `python scripts/check_citations.py docs/draft_as_submitted/ch2.md
+      --refs docs/draft_as_submitted/references.md` (and again on
+      `full.md`) after regenerating the mirror from the final .docx: exit 0
+      = cited-not-referenced, referenced-not-cited and bare-name lists all
+      empty; `--every-mention` for the strict per-sentence list.
+- [ ] Run `PYTHONPATH=src python scripts/verify_model_cards.py`: exit 0 =
+      Table M1 pins still match the wrapper constants (the RapidOCR
+      no-exact-pin warning is always printed; requirements-full.txt gap).
+- [ ] Wilson CIs quoted with Table E3a match
+      `outputs/evaluation/<run>/t2/derived_intervals.json`; regenerate with
+      `python scripts/ci_from_envelope.py <results.json> --write` only if the
+      envelope itself is re-run (D-032).
+- [ ] Fig 8 source `docs/figures/fig_judge_ladder.mmd` rendered (mmdc or a
+      mermaid viewer) and its caption taken from the file's `%%` comments.
+- [ ] Regenerate the test inventory after the last change under `tests/`:
+      `python -m pytest -q --junitxml=<xml>` then `python scripts/test_inventory.py
+      --env-label "<label>" --junit <xml> --out docs/generated/test_inventory.md`
+      (once per interpreter; exit 1 = unclassified test id); Table E1a and the
+      README / Table E1 count lines quote its header, never hand-typed counts.

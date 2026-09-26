@@ -2,10 +2,11 @@
 
 > **HISTORICAL (preliminary-report video, Tier-A era).** Counts and shots below
 > describe the mock-pipeline prototype as submitted then (e.g. "23 passed" —
-> the suite is now 45/10 WSL, 33/11 offline). The FINAL demo flows through the
+> the suite is now 95 passed / 10 skipped WSL, 83 passed / 11 skipped offline, measured 2026-09-24 on the uncommitted working tree). The FINAL demo flows through the
 > server UI instead: boot with `bash scripts/demo_up.sh`, then /ui presets →
 > rule-vs-llama3 compare → llama3 streaming → /dashboard. Write a new shot list
 > for the final video; keep this file as the preliminary record.
+> Final shot list: docs/Video_Shot_List_Final.md (pre-flight: scripts/video_preflight.sh; numbers: docs/video_number_card.md).
 
 **Project:** CM3070 Preliminary Report — TriGuard
 **Length target:** 3–5 minutes (script ≈ 600 words ≈ 4 min 15 s at 140 wpm)
@@ -43,7 +44,7 @@
 
 ### Shot 3 — Architecture recap (20 s)
 
-*Show `docs/architecture.png` full-screen.*
+*Show `docs/figures/fig1_architecture.svg` full-screen (as-built figure; the preliminary take used `docs/architecture.png`).*
 
 > "The architecture is six layers. An input handler validates the payload; a dispatcher routes each modality to a wrapper; the wrappers return normalised Pydantic evidence; the judge reads the evidence and emits a structured decision with a rationale; and a side branch sends the same result into the evaluation harness."
 

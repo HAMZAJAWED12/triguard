@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="Arial, Helvetica, sans-serif">
+  <!-- Final video, shot 9. SLOT TEMPLATE ONLY: the student fills the bullets from the candidate list in docs/Video_Shot_List_Final.md. Nothing is pre-selected. -->
+  <!-- No external fonts or scripts. High contrast: white/navy. -->
+  <rect width="1920" height="1080" fill="#0b1f3a"/>
+  <rect x="0" y="0" width="1920" height="14" fill="#ffd166"/>
+  <rect x="0" y="1066" width="1920" height="14" fill="#ffd166"/>
+
+  <text x="960" y="120" text-anchor="middle" fill="#ffffff" font-size="72" font-weight="bold">TriGuard — where it stands</text>
+
+  <!-- left column: Achieved -->
+  <rect x="80" y="190" width="860" height="720" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.35" stroke-width="2"/>
+  <rect x="80" y="190" width="860" height="80" fill="#ffd166"/>
+  <text x="510" y="245" text-anchor="middle" fill="#0b1f3a" font-size="44" font-weight="bold">Achieved</text>
+  <g fill="#ffffff" font-size="34">
+    <text x="120" y="350">•  [STUDENT: slot 1]</text>
+    <text x="120" y="450">•  [STUDENT: slot 2]</text>
+    <text x="120" y="550">•  [STUDENT: slot 3]</text>
+    <text x="120" y="650">•  [STUDENT: slot 4]</text>
+    <text x="120" y="750">•  [STUDENT: slot 5 — delete if unused]</text>
+  </g>
+
+  <!-- right column: To improve -->
+  <rect x="980" y="190" width="860" height="720" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.35" stroke-width="2"/>
+  <rect x="980" y="190" width="860" height="80" fill="#ffd166"/>
+  <text x="1410" y="245" text-anchor="middle" fill="#0b1f3a" font-size="44" font-weight="bold">To improve</text>
+  <g fill="#ffffff" font-size="34">
+    <text x="1020" y="350">•  [STUDENT: slot 1]</text>
+    <text x="1020" y="450">•  [STUDENT: slot 2]</text>
+    <text x="1020" y="550">•  [STUDENT: slot 3]</text>
+    <text x="1020" y="650">•  [STUDENT: slot 4]</text>
+    <text x="1020" y="750">•  [STUDENT: slot 5 — delete if unused]</text>
+  </g>
+
+  <text x="960" y="980" text-anchor="middle" fill="#ffd166" font-size="34" font-weight="bold">TriGuard supports human review — every output is a recommended action, not a moderation decision</text>
+  <text x="1890" y="1040" text-anchor="end" fill="#ffffff" font-size="22" fill-opacity="0.6">Final project video — shot 9 of 9</text>
+</svg>

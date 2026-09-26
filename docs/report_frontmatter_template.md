@@ -55,10 +55,14 @@ official sentence from the VLE submission page.
 
 ## Figure/screenshot files ready for embedding
 
-- docs/figures/fig1_architecture.svg … fig6_t8_perf.svg (open in browser,
-  export/print to PNG or paste directly — modern Word accepts SVG)
+- docs/figures/fig1_architecture.svg … fig6_t8_perf.svg: insert the SVG
+  files directly (Word accepts SVG); no rasteriser dependency; the embedded
+  figure is then byte-identical to the repo asset
 - docs/figures/screenshots/S1_ui_presets.png (demo UI with presets)
-- docs/figures/screenshots/S4_dashboard.png / S4_dashboard_full.png
+- docs/figures/screenshots/S4_dashboard.png
   (evaluation dashboard, verbatim numbers + limitations visible)
+- committed but unused in the submitted draft (not among its word/media/
+  parts): docs/figures/screenshots/S3_stream_tokens.png,
+  docs/figures/screenshots/S4_dashboard_full.png
 - S2 (rule-vs-llama3 compare) and S3 (live token stream) — capture
   yourself, 60 seconds, see recipe in the chat / skeleton shot list.
