@@ -1,4 +1,4 @@
-# TriGuard — Tier-A Prototype
+# TriGuard
 
 **CM3070 Computer Science Final Project — University of London / Goldsmiths.**
 **Template:** CM3020 Artificial Intelligence — Project Idea 1: *Orchestrating AI Models to Achieve a Goal*.
@@ -7,7 +7,10 @@ TriGuard is a prototype multimodal, explainable, locally deployable content-mode
 
 ## Status
 
-Tier-A feature prototype — used in Chapter 4 of the Preliminary Report.
+Tier-B prototype: real perception tiers and a local LLM judge behind feature
+flags, offline mock defaults intact, evaluation tracks T1–T8 committed as
+evidence. Python 3.10+ (3.12 for the `[audio]` extra). The report itself is not
+in this repository; `docs/` holds the evidence tables, cards and figures it cites.
 
 - **Text wrapper**: sklearn TF-IDF + logistic regression (offline default) with an
   opt-in real **toxic-bert** tier (`TRIGUARD_TEXT_BACKEND=hf`).
@@ -24,12 +27,14 @@ Tier-A feature prototype — used in Chapter 4 of the Preliminary Report.
   where `fastapi`/`httpx`/`python-multipart` are absent). `slow` tests need
   `--run-slow`.
 - Evaluation tracks **T1–T8** on public data (Civil Comments, Memotion,
-  LibriSpeech, ESC-50) — see `docs/evaluation_protocol.md` and
-  `outputs/evaluation/`.
+  LibriSpeech, ESC-50) — protocol in `docs/evaluation_protocol.md`, committed
+  envelopes under `outputs/evaluation/`, every reported number in
+  `docs/report_evidence_tables.md`, datasets and licences in `data/README.md`.
 
 ## Quick start
 
 ```bash
+# minimal offline lane (mock image/audio, sklearn text, rule judge) — no downloads
 pip install -r requirements.txt
 PYTHONPATH=src python -m pytest -q                 # fast lane, no network
 PYTHONPATH=src python -m triguard.evaluation.run_eval
@@ -95,17 +100,18 @@ triguard/
 ├── pyproject.toml                  package metadata + [eval]/[audio] extras
 ├── requirements.txt                pinned fast-lane deps
 ├── requirements-full.txt           exact pins of the WSL combined venv
-├── CLAUDE.md / DECISIONS.md / JOURNAL.md   working rules, decision log, journal
+├── DECISIONS.md / JOURNAL.md       decision log (D-001…), weekly journal
 ├── docs/                           writeups, report scaffolding, figures
+├── data/README.md                  datasets used, splits, licences, media origins
 ├── data/sample_inputs/             committed benign media + presets + T6 manifest
-├── data/local_demo/                gitignored local demo media (see its README)
+├── data/local_demo/                gitignored local demo media (not in the public repo)
 ├── src/triguard/
 │   ├── orchestrator/               pipeline + frozen pydantic schemas
 │   ├── models/                     text/image/audio wrappers + LLM judge
 │   ├── data/                       dataset loaders (T2/T3/T4)
 │   ├── evaluation/                 run_eval + T2-T8 harnesses + failure analysis
 │   └── api/                        FastAPI demo (/ui, /dashboard) + static pages
-├── scripts/                        venv builders, smokes, demo_up.sh
+├── scripts/                        demo_up.sh, venv builders, evaluation + report tooling
 ├── tests/                          fast offline lane + slow-marked real paths
 └── outputs/evaluation/<run>/       committed results.json evidence per track
 ```
