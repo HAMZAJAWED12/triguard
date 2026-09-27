@@ -1,9 +1,9 @@
 # TriGuard
 
 **CM3070 Computer Science Final Project — University of London / Goldsmiths.**
-**Template:** CM3020 Artificial Intelligence — Project Idea 1: *Orchestrating AI Models to Achieve a Goal*.
+**Template:** CM3020 — Project Idea 1.
 
-TriGuard is a prototype multimodal, explainable, locally deployable content-moderation pipeline. It combines several pre-trained AI models (text, image, audio) with a local LLM judge that produces a structured risk decision and a human-readable rationale.
+TriGuard is a prototype multimodal, explainable, locally deployable content-moderation pipeline. It combines pre-trained text, image and audio models with a local LLM judge that produces a structured risk decision and a human-readable rationale.
 
 ## Status
 
