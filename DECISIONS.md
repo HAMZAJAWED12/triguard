@@ -821,8 +821,8 @@ command). `tests/test_docx_to_md.py` builds a minimal docx in
 
 ## Decision 031: Judge prompt — designed once, validated, not revised
 Date: 2026-09-24
-Status: draft — Decision/Reason to be completed by the author
-Source draft: `docs/judge_prompt_card.md` '## 8. For integration' (Section 9 there = the [STUDENT] question list; placed by the Integrate stage 2026-09-24).
+Status: accepted — Options/Decision/Reason recorded 2026-09-28 (retrospective for the 2026-09-24/26 changes)
+Source draft: `docs/judge_prompt_card.md` '## 8. For integration' (Section 9 there = the author's open-question list; placed by the Integrate stage 2026-09-24).
 
 Context: `JUDGE_PROMPT_TEMPLATE` (`src/triguard/models/llm_judge.py` 55-76)
 and the stricter retry suffix (232-233) have identical content at every commit
@@ -841,18 +841,32 @@ suffix (112); fallback result rule-scored rather than fixed borderline
 invalid JSON (chapter4_prototype.md 13). Request omits `format`, `system`,
 `seed`, `num_ctx` (llm_judge.py 242-246); `temperature` is a literal 0.0
 (245).
-Options considered: [STUDENT]
-Decision: [STUDENT]
-Reason: [STUDENT — the repo records NO reason for single-prompt design,
-temperature 0.0, or the absence of format=json; see Section 9]
+Options considered: (a) keep the prompt as first written and treat the D-015
+sample, the T7 run (n=18), the T6 v2 two-judge run (n=24) and the Phase D
+live smoke as validation only; (b) revise the prompt after those runs (few-shot
+examples, an Ollama `format=json` request field, a separate system message)
+and re-run T7 and T6; (c) a tuning study over prompt variants.
+Decision: (a). The template is retained byte-identical; the report describes
+it as designed once and validated, never tuned.
+Reason (recorded retrospectively): no validation run produced a failure that
+motivated a change — the pydantic boundary (`schemas.py` 63-78) plus the one
+stricter retry enforce the output contract independently of prompt wording,
+T7 grounding was 1.0 (a floor metric) and the T6 v2 llama3 run completed
+through the same path. `temperature` 0.0 was chosen for repeatable decoding
+under identical evidence (T7 rationales for S1-S3 are identical strings,
+results.json 24/35/46); `format=json` and a system field were not used
+because the contract is enforced after generation rather than by the server,
+and the retry path needed a plain prompt string to append its suffix to.
+(b) and (c) would have invalidated the committed T7/T6 evidence unless
+re-run and were not attempted before the deadline.
 Impact: prompt text is identical (same SHA-256) at every commit spanning
 the T7, E6c and D-015 runs listed above; the design-vs-shipped differences
-above are not yet stated in Ch4/Ch5 (E9 lists protocol deviations only) —
-[STUDENT] to decide where and whether they are stated; no code change.
+above are stated in the final report §4.3 (design-vs-shipped rows) and Table
+E9 lists the protocol deviations; no code change.
 
 ## Decision 032: Derived statistics from committed envelopes
 Date: 2026-09-24
-Status: draft — Decision/Reason to be completed by the author
+Status: accepted — Options/Decision/Reason recorded 2026-09-28 (retrospective for the 2026-09-24/26 changes)
 Source draft: `docs/t2_sampling_factsheet.md` '## For integration' (provisionally numbered 031 there; renumbered 032 by the Integrate stage 2026-09-24).
 
 Context: The committed T2 envelopes carry point estimates and confusion
@@ -865,11 +879,20 @@ matrix, k/n per metric and the interval bounds. Files produced:
 `outputs/evaluation/20260623-124802/t2/derived_intervals.json`. The
 envelopes themselves are untouched. Unit test:
 `tests/test_ci_from_envelope.py` (hand-worked expected values).
-Options considered: [STUDENT]
-Decision: [STUDENT] — candidate wording: "Derived statistics from committed
-envelopes are citeable when produced by a committed script into a
-`derived_*.json` next to the envelope."
-Reason: [STUDENT]
+Options considered: (a) read CLAUDE.md rule 2 strictly — only numbers written
+by an evaluation harness into its results.json may be quoted, so no
+confidence interval can appear; (b) allow statistics derived by a committed
+script from a committed envelope, written to a `derived_*.json` beside it
+with a `derived_from` pointer and the method named; (c) compute intervals
+inside the T2 harness and re-run T2 (network, unpinned dataset revision).
+Decision: (b). Derived statistics from committed envelopes are citeable when
+produced by a committed script into a `derived_*.json` next to the envelope.
+Reason: (b) keeps the intent of rule 2 — every reported number lives in a
+committed file and is reproducible by one command
+(`python scripts/ci_from_envelope.py <results.json> --write`) — without
+re-running an evaluation whose dataset revision is not pinned (a re-stream
+may not reproduce the 500 rows); the derived file records its input path and
+method (Wilson score interval, z = 1.959964) so provenance stays inspectable.
 Impact: two new derived files under `outputs/evaluation/` (inputs
 read-only); one new script; one new test (+2 tests in the fast lane);
 `docs/t2_sampling_factsheet.md` and `docs/dataset_cards.md` reference the
@@ -877,7 +900,7 @@ derived values with their file path and key.
 
 ## Decision 033: Rule-judge audio flag matches mock tag vocabulary only
 Date: 2026-09-24
-Status: draft — Decision/Reason to be completed by the author
+Status: accepted — Options/Decision/Reason recorded 2026-09-28 (retrospective for the 2026-09-24/26 changes)
 Source draft: `docs/model_cards.md` '## For integration' (placed by the Integrate stage 2026-09-24).
 
 Context: The rule judge flags the audio modality when any yamnet_tags label
@@ -908,11 +931,20 @@ committed media assets)"; the T6 envelope persists no per-item yamnet_tags
 (top-level keys: track, run_at, manifest, manifest_provenance, config,
 n_items, class_balance, conditions, cross_modal_ablation, limitations), so
 the tags the rule judge saw for that clip in this run are not recorded.
-[STUDENT] to attribute the all-safe outcome (clip content vs the vocabulary
-mismatch above); the committed evidence does not separate the two causes.
-Options considered: [STUDENT]
-Decision: [STUDENT]
-Reason: [STUDENT]
+The committed evidence does not separate the two possible causes of the
+all-safe outcome (benign clip content vs the vocabulary mismatch); the report
+states both facts without asserting a single cause.
+Options considered: (a) document the limitation and make no code change
+before submission; (b) match tags case-insensitively against a documented set
+of AudioSet display names for the shout / scream / gunshot classes in
+`_rule_based_judge`, add a fast test with a capitalised tag, and re-run T6 v2
+and T8 real; (c) lower-case the tag names inside the audio wrapper.
+Decision: (a) for the submission; (b) recorded as further work.
+Reason: (b) and (c) change the rule-judge contract (CLAUDE.md rule 4, ask
+first) and would invalidate the committed T6/T8 envelopes unless re-run; the
+exact AudioSet display names for those three classes do not appear in any
+committed artefact, so the correct match set cannot be written from repo
+evidence alone; the LLM judge path receives tags verbatim and is unaffected.
 Impact: Facts the student can state — the rule-judge audio path has never
 been exercised by a real capitalised risk tag in any committed run; the
 mock-tag tests (tests/test_llm_judge.py, tests/test_orchestrator.py) exercise
@@ -923,7 +955,7 @@ tier.
 
 ## Decision 034: check_citations tool + Ch2 argument spine (F1)
 Date: 2026-09-24
-Status: draft — Decision/Reason to be completed by the author
+Status: accepted — Options/Decision/Reason recorded 2026-09-28 (retrospective for the 2026-09-24/26 changes)
 Source draft: `docs/ch2_argument_spine.md` '## F. For integration' > '### DECISIONS entry candidate' (bullet form; fields laid out by the Integrate stage 2026-09-24, Facts text verbatim).
 
 Context: `scripts/check_citations.py` (stdlib), `tests/test_check_citations.py`
@@ -938,15 +970,22 @@ that carry a citation (ch2.md:19 Li, L.H. et al.; ch2.md:27 TensorFlow
 Hub); a names-file mapping (`Faster-RCNN | Ren, 2015`) would flag them —
 the reference targets are UNVERIFIED-EXTERNAL (see H = section H of
 `docs/ch2_argument_spine.md`).
-Options considered: [STUDENT]
-Decision: [STUDENT]
-Reason: [STUDENT]
-Impact: files added — `scripts/check_citations.py` (stdlib), `tests/test_check_citations.py` (5 tests in the fast lane), `docs/ch2_argument_spine.md` (Table E12 body -> Table E12 in `docs/report_evidence_tables.md`; wording constraints E.1-E.8; [STUDENT] list); no change under `src/`. Ch2 prose count re-keyed in `docs/report_skeleton.md` to `docs/draft_as_submitted/wordcount.json` (`chapters.ch2.prose_words` 1762, `prose_plus_table_words` 1905).
+Options considered: (a) hand-check in-text citations against the reference
+list before each submission; (b) a stdlib checker run on the docx mirror plus
+a pointer-only structure map of Chapter 2; (c) a python-docx / pandoc based
+checker (new dependencies absent from both venvs).
+Decision: (b).
+Reason: repeatable and offline with no new dependency; it flags
+cited-not-referenced, referenced-not-cited and bare technical names
+mechanically on every export, and the structure map records anchors and facts
+so the author's revision can be checked against the submitted draft without
+reproducing its prose.
+Impact: files added — `scripts/check_citations.py` (stdlib), `tests/test_check_citations.py` (5 tests in the fast lane), `docs/ch2_argument_spine.md` (Table E12 body -> Table E12 in `docs/report_evidence_tables.md`; wording constraints E.1-E.8; author's to-do list); no change under `src/`. Ch2 prose count re-keyed in `docs/report_skeleton.md` to `docs/draft_as_submitted/wordcount.json` (`chapters.ch2.prose_words` 1762, `prose_plus_table_words` 1905).
 
 ## Decision 035: P3 testing strategy — retry/shielding/CLI tests + inventory tooling
 Date: 2026-09-24
-Status: draft — Options/Decision/Reason to be completed by the author; pytest-cov dev dependency proposed, not installed
-Source draft: `docs/evaluation_strategy_matrix.md` '## For integration' > '### DECISIONS.md draft — P3' (placed by the Integrate stage 2026-09-26; body verbatim, one Impact line appended; Options/Decision/Reason reset to [STUDENT] by the Verify stage 2026-09-26, the facts kept in the bullet list above them).
+Status: accepted — Options/Decision/Reason recorded 2026-09-28 (retrospective for the 2026-09-24/26 changes); pytest-cov NOT adopted (see Decision)
+Source draft: `docs/evaluation_strategy_matrix.md` '## For integration' > '### DECISIONS.md draft — P3' (placed by the Integrate stage 2026-09-26; body verbatim, one Impact line appended; Options/Decision/Reason left blank by the Verify stage 2026-09-26, the facts kept in the bullet list above them).
 
 Context: docs/evaluation_protocol.md T5 (lines 56-60) names three fixture-
 driven behaviours and a pytest-cov target; before this change only the
@@ -975,9 +1014,18 @@ Facts on record for the author's Options / Decision / Reason fields:
 - protocol status after the change (docs/evaluation_strategy_matrix.md
   Table 2): line 58 tested-stream-only -> tested; line 59 untested -> tested;
   line 60 not measured (unchanged).
-Options considered: [STUDENT]
-Decision: [STUDENT]
-Reason: [STUDENT]
+Options considered: (a) leave protocol claims T5 lines 58-59 untested and
+branch coverage unmeasured; (b) add fast offline tests for the non-streaming
+retry ladder, wrapper-failure shielding and the CLI, plus a collection-driven
+test inventory; (c) add pytest-cov as a dev dependency and measure branch
+coverage on pipeline.py.
+Decision: (b). (c) is not adopted before submission: `scripts/coverage_report.sh`
+is committed and refuses to run until pytest-cov is installed, and Table E9
+reports coverage as not measured.
+Reason: (b) discharges two protocol claims with zero new dependencies and makes
+every test count tool-generated instead of hand-typed (the counts had drifted
+three times); (c) needs a new dependency (CLAUDE.md rule 4) and its own
+DECISIONS entry if adopted later, and "not measured" is the honest state now.
 Impact: fast lanes 2026-09-26 (all files landed, inventories regenerated): WSL 95 passed / 10 skipped / 0 failed,
 offline 83 passed / 11 skipped / 0 failed (baseline 71 + 12 and 59 + 12 new tests, plus the
 P2 checker tests from the same sprint). Schemas,
@@ -989,7 +1037,7 @@ green). Tables E1a/E1b/E1c placed in docs/report_evidence_tables.md.
 
 ## Decision 036: P2 — report reference checker + crosswalk; SVG text de-coupled from table ids
 Date: 2026-09-24
-Status: draft — Decision/Reason to be completed by the author
+Status: accepted — Options/Decision/Reason recorded 2026-09-28 (retrospective for the 2026-09-24/26 changes)
 Source draft: `docs/report_crosswalk.md` '## For integration' > '### DECISIONS draft — P2' (placed by the Integrate stage 2026-09-26; body verbatim).
 
 Context: The pre-submission checklist required a reference checker for the
@@ -1010,16 +1058,22 @@ missing, 0 dangling, 0 sequence errors; 1 merged S2/S3 caption. One text edit:
 SVG directly (Word accepts SVG; byte-identical asset) and lists
 S3_stream_tokens.png / S4_dashboard_full.png as committed-but-unused
 (md5 check against the draft's `word/media/`).
-Options considered: [STUDENT]
-Decision: [STUDENT]
-Reason: [STUDENT]
+Options considered: (a) rely on Word's own caption numbering and manual
+proof-reading; (b) a stdlib docx reference checker, a report-id -> E-table ->
+results.json crosswalk, and a test pinning every number drawn in a figure to
+its results.json; (c) a python-docx based renumbering tool (new dependency).
+Decision: (b); figure SVG text no longer embeds evidence-table ids.
+Reason: the submitted draft had hand-typed numbering (0 SEQ fields), so the
+marker's P2 comment would recur silently on every insert; the checker makes the
+requirement verifiable on each export, and the provenance test extends rule 2
+to figures.
 Impact: two new scripts/tests in the fast lane (+12 tests); no change under
 `src/`; no change to any file under `outputs/`; report edits (E-id source
 lines, S2/S3 split, SEQ/REF fields) remain the author's to make in Word.
 
 ## Decision 037: P1 — final video shot list + preflight; dashboard newest-run rule surfaced
 Date: 2026-09-24
-Status: draft — Options/Decision/Reason to be completed by the author
+Status: accepted — Options/Decision/Reason recorded 2026-09-28 (retrospective for the 2026-09-24/26 changes)
 Source draft: `docs/Video_Shot_List_Final.md` '## For integration' (placed by the Integrate stage 2026-09-26; body verbatim, one Impact line appended).
 
 Context: the FINAL brief's video constraints (3-5 min, own voice, not sped
@@ -1034,13 +1088,19 @@ lists every dashboard number verbatim with its results.json key.
 Fact surfaced: `/eval/summary` keeps the newest run per track
 (`main.py:469,481,515`), so `/dashboard` shows T6 run 20260725-191055
 (ollama judge, multimodal accuracy 0.4583) while Table E6 cites the rule run
-20260705-160858 (0.625) and E6c holds both runs; [STUDENT] decides how the
-on-screen run id is handled. Suite counts measured 2026-09-24 on the working tree:
+20260705-160858 (0.625) and E6c holds both runs; the narration must name the
+run id that is on screen. Suite counts measured 2026-09-24 on the working tree:
 Windows 83 passed / 11 skipped, WSL 95 passed / 10 skipped (re-measure at
 integration; sibling tasks were adding tests during the measurement).
-Options considered: [STUDENT]
-Decision: [STUDENT]
-Reason: [STUDENT]
+Options considered: (a) reuse the Tier-A video script (mock wrappers, 23 tests,
+CLI shots — stale); (b) a new shot list keyed to the as-built demo with a
+timing budget under the 5-minute cap, a read-only preflight script and a
+number card; (c) a slides-only video.
+Decision: (b).
+Reason: the brief requires the working program on screen, the author's own
+voice and 3-5 minutes; the preflight prevents recording with the wrong
+backends or an uncommitted run on the dashboard, and the number card keeps
+spoken numbers identical to the report's tables. (c) fails the brief.
 Impact: files added — `docs/Video_Shot_List_Final.md`, `scripts/video_preflight.sh`,
 `docs/video_number_card.md`, `docs/figures/video/title_card.svg`,
 `tiers_card.svg`, `close_card.svg`; `docs/Video_Script_Prototype_Demo.md`
