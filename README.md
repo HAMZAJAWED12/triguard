@@ -31,7 +31,7 @@ in this repository; `docs/` holds the evidence tables, cards and figures it cite
   envelopes under `outputs/evaluation/`, every reported number in
   `docs/report_evidence_tables.md`, datasets and licences in `data/README.md`.
 
-## Quick start
+## Quick Commands
 
 ```bash
 # minimal offline lane (mock image/audio, sklearn text, rule judge) — no downloads
